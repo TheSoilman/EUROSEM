@@ -1,0 +1,70 @@
+ MEUROSEM V. 3/93 Parameter Input File catsup test 930530
+#
+**********************************
+***********  S Y S T E M  ********
+**********************************
+*  NELE   NPART  CLEN(M)  TFIN(min) DELT(min)  THETA   TEMP
+    2       0     110.      88.      1.0       0.7    20.
+#
+***********************************
+********* O P T I O N S ***********
+***********************************
+  NTIME   NEROS
+    2       2
+#
+***********************************************
+****   C O M P U T A T I O N   O R D E R   ****
+***********************************************
+  There must be NELE elements in the list. NLOG
+  must be sequential. ELEMENT NUM. need not be.
+#
+  COMP. ORDER    ELEMENT
+     (NLOG)      NUM. (J)
+     ------      --------
+       1            1
+       2            2
+#
+***********************************************
+******   E L E M E N T - W I S E   I N F O  ***
+***********************************************
+    There must be NELE sets of the ELEMENT-WISE  prompts and data
+    records; duplicate records from * to * for each element.  The
+    elements may be entered in any order.
+*      potatoes
+ J     NU        NR       NL      NC1      NC2     NPRINT
+ 1      0         0        0        0        0       0
+------------------------------------------------------------------
+     XL(M)    W(M)     S     ZR     ZL    BW(M)  MANN(Rill) Mann(IR)
+   100.0    145.   0.85    0.0    0.0    0.0       0.188   0.188
+-------------------------------------------------------------------
+     FMIN(mm/h)  G(mm)  POR  ThI   ThMX    ROC   RECS(mm) DINT(mm) 
+      5.       400.    0.4  0.15  0.3     0.0    1.     0.90      
+-------------------------------------------------------------------
+     DEPNO    RILLW(m)   RILLD(m)   ZLR    RS      RFR   SIR
+     0.0      0.0        0.0        0.     .0      0.0    .85
+-------------------------------------------------------------------
+     COVER     SHAPE   PLANGLE   PLANTBASE   PLANTH(cm)  Dero  stone
+      0.15        2      55.0      0.05       3.0      5.0    1
+-------------------------------------------------------------------
+     D50(u)    EROD   SPLTEX   COH    RHOS   PAVE   SIGMAS  MCODE
+     25.      .9       2.     1.00    2.6    0.0    0.00     1
+*
+*      potatoes
+ J     NU        NR       NL      NC1      NC2     NPRINT
+ 2      0         0        0        0        0       0
+------------------------------------------------------------------
+     XL(M)    W(M)     S     ZR     ZL    BW(M)  MANN(Rill) Mann(IR)
+   10.0    145.   0.85    0.0    0.0    0.0       0.188   0.188
+-------------------------------------------------------------------
+     FMIN(mm/h)  G(mm)  POR  ThI   ThMX    ROC   RECS(mm) DINT(mm) 
+     5.       400.    0.4  0.15  0.3     0.0    1.     0.90      
+-------------------------------------------------------------------
+     DEPNO    RILLW(m)   RILLD(m)   ZLR    RS      RFR   SIR
+     0.0      0.0        0.0        0.     .0      0.0    .85
+-------------------------------------------------------------------
+     COVER     SHAPE   PLANGLE   PLANTBASE   PLANTH(cm)  Dero  stone
+      0.15        2      55.0      0.05       3.0      5.0    1
+-------------------------------------------------------------------
+     D50(u)    EROD   SPLTEX   COH    RHOS   PAVE   SIGMAS  MCODE
+     25.      .9       2.     1.00    2.6    0.0    0.00     1
+*

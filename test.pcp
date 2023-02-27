@@ -1,0 +1,41 @@
+   EUROSEM   Rainfall Input Data V3.5 catsop 2year
+#
+****************************
+      Gage Network Data
+****************************
+#
+  NUM. OF RAINGAGES    MAX. NUM. OF TIME-DEPTH DATA PAIRS FOR ALL GAGES
+      (NGAGES)            (MAXND)
+      --------            -------
+         1                 2
+#
+ There must be NELE  pairs of (GAGE  WEIGHT) data
+*
+ ELE. NUM. (J)     RAINGAGE     WEIGHT
+ -------------     --------     ------
+       1              1          1.0
+       2              1          1.0       
+#
+*****************************
+       Rainfall Data
+*****************************
+ There must be NGAGES sets of rainfall data. Repeat lines from * to *
+ for each gage inserting a variable number of TIME-DEPTH data pairs
+ (see example in User Manual).
+#
+* ALPHA-NUMERIC GAGE ID: eurosem test data
+#
+  GAGE NUM.     NUM. OF DATA PAIRS (ND)
+  ---------     -----------------------
+      1                  2
+#
+ There must be ND pairs of time-depth (T D) data: NOTE: The last time
+ must be greater than TFIN (the total computational time).
+#
+  TIME(min)  ACCUM. DEPTH(mm)
+  ------    ------------
+    0.0          0.
+    30.0         10.0
+   100.          10.0
+*
+
