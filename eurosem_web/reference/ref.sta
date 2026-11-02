@@ -1,0 +1,112 @@
+
+
+          ----------------------------------------------
+          |                                            |
+          *       EUROSEM 3 STATIC SUMMARY FILE        *
+          |                                            |
+          ----------------------------------------------
+
+
+          RUN TITLE:test                                                                            
+
+      INPUT DATA FOR ELEMENT   1
+      =========================
+      NU:     0
+       W:      100.00 M      XL:      100.00 M       S:     0.09
+    MANN:       0.188      FMIN:        5.00 MM/HR   G:   400.00 MM
+     POR:        0.40       THI:        0.15      THMX:     0.30
+     ROC:        0.00      RECS:        1.00 MM  DINTR:     0.90 MM
+   DEPNO:        0.00        RS:        0.0        RFR:    0.000 % 
+     ZLR:        0.00     RILLW:        0.00 M   RILLD:     0.00 M
+   COVER:        0.15     SHAPE:        2         PANG:    55.00 o
+   PBASE:        0.05     PHEIG:        0.40 M     D50:    25.00 um
+    EROD:        0.90 G/J SPLTX:        2.00       COH:     1.00 KPA
+    RHOS:        2.60kgm3  PAVE:        0.00     SIGMA:     0.00
+     SIR:       0.095      DERO:        5.00 m
+  Derived parameters:    MN(IR):       0.188  SurfStor:   0.000001 mm
+
+
+
+   EROSION SUMMARY
+   ---------------
+   GROSS INTERRILL EROSION    16530.055 kg   16.530 t/ha
+
+   NET EROSION/DEPOSITION     16530.156 kg   16.530 t/ha
+   (a minus denotes deposition)
+
+
+   HYDROLOGY SUMMARY, ELEMENT  1
+   ==============================
+
+   NET RAINFALL                            =  49.865     (MM)
+   PEAK RAINFALL RATE                      =  99.730     (MM/H)
+
+   TIME TO RUNOFF                          =  2.5000     (MIN)
+   DURATION OF RUNOFF                      =  53.500     (MIN)
+   TIME TO PEAK FLOW RATE                  =  30.000     (MIN)
+   PEAK FLOW RATE                          =  77.555    (MM/H)
+
+   TIME TO PEAK SEDIMENT DISCHARGE         =  30.000    (MIN)
+   PEAK SEDIMENT DISCHARGE                 =  773.39    (kg/MIN)
+
+
+      INPUT DATA FOR ELEMENT   2
+      =========================
+      NU:     1
+       W:      100.00 M      XL:       10.00 M       S:     0.05
+    MANN:       0.188      FMIN:        5.00 MM/HR   G:   400.00 MM
+     POR:        0.40       THI:        0.15      THMX:     0.30
+     ROC:        0.00      RECS:        1.00 MM  DINTR:     0.90 MM
+   DEPNO:        0.00        RS:        0.0        RFR:    0.000 % 
+     ZLR:        0.00     RILLW:        0.00 M   RILLD:     0.00 M
+   COVER:        0.15     SHAPE:        2         PANG:    55.00 o
+   PBASE:        0.05     PHEIG:        0.40 M     D50:    25.00 um
+    EROD:        0.90 G/J SPLTX:        2.00       COH:     1.00 KPA
+    RHOS:        2.60kgm3  PAVE:        0.00     SIGMA:     0.00
+     SIR:       0.050      DERO:        5.00 m
+  Derived parameters:    MN(IR):       0.188  SurfStor:   0.000001 mm
+
+
+
+   EROSION SUMMARY
+   ---------------
+   GROSS INTERRILL EROSION    -8644.672 kg  -86.447 t/ha
+
+   NET EROSION/DEPOSITION     -8651.724 kg  -86.517 t/ha
+   (a minus denotes deposition)
+
+
+   HYDROLOGY SUMMARY, ELEMENT  2
+   ==============================
+
+   NET RAINFALL                            =  49.865     (MM)
+   PEAK RAINFALL RATE                      =  99.730     (MM/H)
+
+   TIME TO RUNOFF                          =  2.5000     (MIN)
+   DURATION OF RUNOFF                      =  56.500     (MIN)
+   TIME TO PEAK FLOW RATE                  =  30.000     (MIN)
+   PEAK FLOW RATE                          =  77.287    (MM/H)
+
+   TIME TO PEAK SEDIMENT DISCHARGE         =  30.000    (MIN)
+   PEAK SEDIMENT DISCHARGE                 =  409.42    (kg/MIN)
+
+
+
+   GLOBAL VOLUME BALANCE
+   =====================
+
+   TOTAL RAINFALL DEPTH                    =    49.865 (MM)
+
+   STORAGE REMAINING ON ALL PLANES         =   0.00069 (MM)
+   STORAGE REMAINING IN CHANNELS+CONDUITS  =   0.00000 (MM)
+   STORAGE REMAINING IN PONDS              =   0.00000 (MM)
+   TOTAL INFILTRATION FROM ALL PLANES      =  22.99585 (MM)
+   TOTAL INFILTRATION FROM ALL CHANNELS    =   0.00000 (MM)
+   TOTAL BASIN RUNOFF                      =  26.83614 (MM)       295.1976 CU.M.
+                                             ---------
+   TOTAL OF STOR., INFIL. AND RUNOFF TERMS =  49.83268 (MM)
+
+
+                *** GLOBAL VOL. ERROR  =     0.0648 PERCENT ***
+
+

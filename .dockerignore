@@ -1,0 +1,10 @@
+**/__pycache__
+**/*.pyc
+**/test_*.py
+headless/stage1_fatal
+headless/stage2_headless
+headless/stage3_mbfix
+eurosem_web/reference
+eurosem_web/baseline_results.json
+eurosem_web/*.html
+!eurosem_web/app.html

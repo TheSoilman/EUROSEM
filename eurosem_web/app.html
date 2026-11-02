@@ -1,0 +1,710 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>EUROSEM Planes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: one column. Event and rainfall, then plane cards, then Run; results appear below the form.
+   Colour: cool grey-green neutrals; plane series use the validated categorical order. */
+:root{
+  color-scheme:light;
+  --bg:#f4f7f7; --surface:#ffffff; --ink:#10201f; --ink2:#44585a; --muted:#6b7e80;
+  --line:#d9e2e2; --grid:#e8eeee; --accent:#0f6b66; --accent-ink:#ffffff; --field:#f9fbfb;
+  --c1:#2a78d6; --c2:#eb6834; --c3:#1baf7a; --c4:#eda100; --c5:#e87ba4; --c6:#008300; --c7:#6250d6; --c8:#e34948;
+  --rain:#7d97a6; --warn-bg:#fff4dc; --warn-ink:#6b4a00; --err-bg:#fde8e6; --err-ink:#8a1d12;
+  --font:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0d1516; --surface:#142021; --ink:#e6efee; --ink2:#b3c4c3; --muted:#869a9a;
+  --line:#26393a; --grid:#1d2c2d; --accent:#4cc2b8; --accent-ink:#0d1516; --field:#101a1b;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+  --rain:#6f8a99; --warn-bg:#3a2e12; --warn-ink:#f1d48a; --err-bg:#3d1b17; --err-ink:#f3b4ab}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0d1516; --surface:#142021; --ink:#e6efee; --ink2:#b3c4c3; --muted:#869a9a;
+  --line:#26393a; --grid:#1d2c2d; --accent:#4cc2b8; --accent-ink:#0d1516; --field:#101a1b;
+  --c1:#3987e5; --c2:#d95926; --c3:#199e70; --c4:#c98500; --c5:#d55181; --c6:#008300; --c7:#9085e9; --c8:#e66767;
+  --rain:#6f8a99; --warn-bg:#3a2e12; --warn-ink:#f1d48a; --err-bg:#3d1b17; --err-ink:#f3b4ab}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
+.wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1{font-size:26px;line-height:1.2;margin:0;font-weight:600;letter-spacing:-.01em}
+h2{font-size:13px;margin:0 0 12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
+.eyebrow{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
+.sub{color:var(--ink2);margin:6px 0 0;max-width:68ch}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 16px;align-items:end}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f label{font-size:12.5px;color:var(--ink2)}
+.f label i{font-style:normal;color:var(--muted);font-family:var(--mono);font-size:11.5px;margin-left:4px}
+input,select{font:inherit;font-family:var(--mono);font-size:14px;color:var(--ink);background:var(--field);border:1px solid var(--line);
+  border-radius:5px;padding:6px 8px;width:100%;min-width:0}
+select{font-family:var(--font)}
+input:focus-visible,select:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+input.bad{border-color:var(--c8)}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:var(--accent-ink);border:0;border-radius:6px;padding:10px 22px;font-weight:600;font-size:15px}
+.btn[disabled]{opacity:.55;cursor:progress}
+.ghost{background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:6px;padding:6px 12px;font-size:13.5px}
+.ghost:hover{border-color:var(--accent)}
+.plane{border:1px solid var(--line);border-radius:8px;padding:14px 16px;display:flex;flex-direction:column;gap:14px;background:var(--surface)}
+.plane header{display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:center}
+.plane h3{margin:0;font-size:16px;display:flex;align-items:center;gap:8px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.grp{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+details{border-top:1px solid var(--line);padding-top:10px}
+summary{cursor:pointer;color:var(--ink2);font-size:13.5px}
+details .grid{margin-top:10px}
+table.rain{border-collapse:collapse;width:100%;max-width:520px}
+table.rain th{font-size:12.5px;font-weight:500;color:var(--ink2);text-align:left;padding:0 8px 4px 0}
+table.rain td{padding:3px 8px 3px 0}
+table.rain td.rate{font-family:var(--mono);font-size:13px;color:var(--ink2);white-space:nowrap}
+.note{background:var(--warn-bg);color:var(--warn-ink);padding:10px 14px;border-radius:6px;font-size:13.5px}
+.err{background:var(--err-bg);color:var(--err-ink);padding:10px 14px;border-radius:6px;font-size:14px}
+.err ul{margin:4px 0 0;padding-left:20px}
+pre{margin:8px 0 0;overflow:auto;font:12px/1.4 var(--mono);max-height:200px}
+.hint{color:var(--muted);font-size:12.5px}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));border:1px solid var(--line);background:var(--surface);border-radius:8px}
+.tile{padding:14px 16px;border-right:1px solid var(--line);min-width:0}.tile:last-child{border-right:0}
+.tile .v{font:500 24px/1.2 var(--mono);font-variant-numeric:tabular-nums}
+.tile .v small{font-size:13px;color:var(--muted);margin-left:4px}
+.tile .l{color:var(--ink2);font-size:13px;margin-top:2px}
+.chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:transparent;color:var(--ink);
+  font:inherit;font-size:13.5px;padding:5px 12px 5px 10px;border-radius:999px}
+.chip i{width:14px;height:3px;border-radius:2px;display:inline-block}
+.chip[aria-pressed="false"]{color:var(--muted);text-decoration:line-through}.chip[aria-pressed="false"] i{opacity:.35}
+.plots{position:relative;touch-action:pan-y}
+.ptitle{display:flex;justify-content:space-between;gap:8px;font-size:13px;color:var(--ink2);margin:10px 0 0}
+.ptitle b{font-weight:600;color:var(--ink)}
+svg{display:block;width:100%;overflow:visible}
+svg text{font:11px var(--mono);fill:var(--muted)}
+.tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:8px 10px;font-size:12.5px;
+  box-shadow:0 4px 14px rgba(0,0,0,.14);display:none;z-index:3;min-width:190px}
+.tip .t{font:500 12px var(--mono);color:var(--ink2);margin-bottom:4px}
+.tip table{border-collapse:collapse;width:100%}.tip td{padding:1px 0}.tip td:last-child{text-align:right;font-family:var(--mono)}
+.sw{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
+.scroll{overflow-x:auto;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table.data{border-collapse:collapse;width:100%;font-size:13.5px}
+table.data th,table.data td{padding:8px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+table.data th:first-child,table.data td:first-child{text-align:left}
+table.data th{font-weight:500;color:var(--ink2);font-size:12.5px}
+table.data td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+table.data td:first-child{font-family:var(--font)}
+table.data tr:last-child td{border-bottom:0}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px}.two>*{min-width:0}
+.neg{color:var(--c2)}
+.q{display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;margin-left:5px;padding:0;border:1px solid var(--line);border-radius:50%;background:transparent;color:var(--muted);font:600 11px var(--font);vertical-align:middle;cursor:pointer}
+.q:hover,.q[aria-expanded="true"]{border-color:var(--accent);color:var(--accent)}
+.helpbox{margin:8px 0 0;padding:9px 12px;border-left:3px solid var(--accent);background:var(--field);border-radius:0 6px 6px 0;font-size:13px;color:var(--ink2);max-width:80ch}
+.helpbox b{color:var(--ink);font-weight:600}
+.picks{margin-top:10px}
+table.sens{border-collapse:collapse;width:100%;font-size:13.5px}
+table.sens th{font-weight:500;color:var(--ink2);font-size:12.5px;text-align:left;padding:0 10px 6px 0}
+table.sens td{padding:6px 10px 6px 0;border-top:1px solid var(--line);vertical-align:middle}
+table.sens input[type=number]{width:104px}
+table.sens input[type=checkbox]{width:auto}
+table.sens td.r,table.sens th.r{text-align:right;font-family:var(--mono);white-space:nowrap}
+.gh{margin:8px 0 0;font-size:12.5px;color:var(--ink2)}
+.gh b{font-weight:500}
+.gh .out{color:var(--c2);font-weight:600}
+.gh .why{color:var(--muted)}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">EUROSEM 3.2L · planes</div>
+    <h1>Run an event</h1>
+    <p class="sub">Describe the rain and one or more planes in a cascade. The model runs on this computer and the results appear below.</p>
+  </header>
+
+  <section aria-label="Event and rainfall">
+    <h2>Event and rainfall</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:16px">
+      <div class="grid">
+        <div class="f"><label for="title">Run title</label><input id="title" type="text" maxlength="80" style="font-family:var(--font)"></div>
+        <div class="f"><label for="duration">Duration<i>min</i></label><input id="duration" type="number" step="any" min="1"></div>
+        <div class="f"><label for="timestep">Time step<i>min</i></label><input id="timestep" type="number" step="any" min="0.01"></div>
+        <div class="f"><label for="temperature">Water temperature<i>°C</i></label><input id="temperature" type="number" step="any"></div>
+      </div>
+      <div>
+        <p class="grp">Rainfall: cumulative depth at each time</p>
+        <table class="rain" id="raintable"><thead><tr><th>Time (min)</th><th>Cumulative depth (mm)</th><th>Rate since previous row</th><th></th></tr></thead><tbody></tbody></table>
+        <div class="row" style="margin-top:8px">
+          <button class="ghost" type="button" id="addrain">Add row</button>
+          <span class="hint">or fill the table from a constant rate:</span>
+          <input id="cr_i" type="number" step="any" min="0" value="100" style="width:80px" aria-label="Intensity in mm per hour"><span class="hint">mm/h for</span>
+          <input id="cr_d" type="number" step="any" min="0" value="30" style="width:80px" aria-label="Duration in minutes"><span class="hint">min</span>
+          <button class="ghost" type="button" id="fillrain">Fill table</button>
+        </div>
+        <p class="hint" id="rainnote" style="margin:8px 0 0"></p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-label="Planes">
+    <h2>Planes</h2>
+    <div id="planes" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div class="row" style="margin-top:12px">
+      <button class="ghost" type="button" id="addplane">Add a plane downstream</button>
+      <span class="hint">The last plane in the cascade is the outlet. Planes are limited to 8 here.</span>
+    </div>
+  </section>
+
+  <section aria-label="Run">
+    <div class="row">
+      <button class="btn" type="button" id="run">Run model</button>
+      <button class="ghost" type="button" id="reset">Reset to the example</button>
+      <span class="hint" id="status" role="status"></span>
+    </div>
+    <div id="messages" style="display:flex;flex-direction:column;gap:10px;margin-top:12px"></div>
+  </section>
+
+  <section aria-label="Sensitivity">
+    <h2>Sensitivity to parameter uncertainty</h2>
+    <div class="panel" style="display:flex;flex-direction:column;gap:12px">
+      <p class="hint" style="margin:0;max-width:75ch">Runs the model again with one parameter at a time at its low and then its high value, everything else as in the form, and shows how much the outlet results change. Ranges come from the user guide for the soil texture chosen on each plane. Type your own low and high to use another range. This shows which inputs matter; it is not a confidence interval.</p>
+      <div class="row"><button class="ghost" type="button" id="sens_setup">Set up sensitivity</button><span class="hint" id="sens_status" role="status"></span></div>
+      <div id="sens_plan" hidden>
+        <div class="scroll" style="border:0"><table class="sens" id="sens_table"></table></div>
+        <div class="row" style="margin-top:10px"><button class="btn" type="button" id="sens_run">Run sensitivity</button><button class="ghost" type="button" id="sens_reset">Reset</button><span class="hint" id="sens_count"></span><span class="hint">Run again after ticking more parameters or changing ranges; every run includes a fresh base case. Reset clears the results and returns the ranges and ticks to the guide defaults.</span></div>
+      </div>
+      <div id="sens_msg" style="display:flex;flex-direction:column;gap:8px"></div>
+      <div id="sens_out" hidden>
+        <div class="row" style="margin-bottom:6px"><label for="sens_metric" class="hint">Show change in</label>
+          <select id="sens_metric" style="width:auto"><option value="runoff_mm">Basin runoff</option><option value="peak_flow_mmh">Peak outflow</option><option value="sediment_kg">Sediment leaving the outlet</option></select>
+          <span class="chip" style="cursor:default"><i style="background:var(--c1)"></i>parameter low</span><span class="chip" style="cursor:default"><i style="background:var(--c2)"></i>parameter high</span>
+          <button class="ghost" type="button" id="sens_dl">Download CSV</button></div>
+        <p class="hint" id="sens_base" style="margin:0 0 6px"></p>
+        <div id="sens_chart"></div>
+        <div class="scroll" style="margin-top:12px"><table class="data" id="sens_results"></table></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="results" hidden style="display:flex;flex-direction:column;gap:28px">
+    <section aria-label="Downloads">
+      <h2>Download</h2>
+      <div class="row">
+        <button class="ghost" type="button" id="dl_results">Results (CSV, wide)</button>
+        <button class="ghost" type="button" id="dl_settings">Settings only (CSV)</button>
+        <span class="hint">The results file starts with comment rows recording every setting used, then one row per time step.</span>
+      </div>
+      <p class="hint" id="dl_note" style="margin:6px 0 0"></p>
+    </section>
+    <section aria-label="Outlet summary"><h2>Outlet summary</h2><div class="tiles" id="tiles"></div></section>
+    <section aria-label="Time series">
+      <h2>Event time series</h2>
+      <div class="panel">
+        <div class="row" id="controls" style="margin-bottom:8px"></div>
+        <div class="plots" id="plots"></div>
+        <div class="tip" id="tip"></div>
+      </div>
+    </section>
+    <section aria-label="Plane results"><h2>Plane results</h2><div class="scroll"><table class="data" id="eltable"></table></div></section>
+    <section aria-label="Water balance"><h2>Global water balance</h2><div class="scroll" style="max-width:520px"><table class="data" id="wbtable"></table></div></section>
+  </div>
+</div>
+
+<script>
+/* ===================== form ===================== */
+const PLANE_FIELDS = [
+  ['Geometry', [['length','Length','m'],['width','Width','m'],['slope','Slope','m/m'],['manning','Manning n','']]],
+  ['Surface roughness', [['rfr','Roughness ratio (RFR)','cm/m']]],
+  ['Soil water', [['fmin','Conductivity (Ks)','mm/h'],['g','Capillary drive','mm'],['porosity','Porosity',''],
+                  ['theta_i','Initial moisture',''],['theta_max','Maximum moisture',''],['roc','Rock fraction','']]],
+  ['Cover', [['cover','Canopy cover','0 to 1'],['plant_height','Plant height','cm'],['interception','Interception','mm'],
+             ['plant_base','Plant base fraction','0 to 1'],['plant_angle','Stem angle','deg'],['plant_shape','Plant shape','']]],
+  ['Erosion', [['d50','Median particle size','µm'],['erodibility','Erodibility','g/J'],['cohesion','Cohesion','kPa'],['pave','Pavement fraction','']]]
+];
+const RILL_FIELDS = [['rill_number','Rills across the width','number'],['rill_width','Rill bottom width','m'],['rill_depth','Rill depth','m'],
+  ['rill_side','Rill side slope','1 : x'],['rill_uniform','Rill depth along the plane',''],['interrill_slope','Interrill slope','m/m, 0 = 1.4 × slope'],['rill_manning','Rill Manning n','0 = same as plane']];
+const MORE_FIELDS = [['storage','Microrelief height (RECS)','mm'],['particle_density','Particle density','g/cm³'],['stone','Stone indicator','']];
+const SELECTS = {plant_shape:[[2,'2  broad leaves'],[1,'1  bladed or needle'],[0,'0  no vegetation']], stone:[[1,'+1  raises conductivity'],[-1,'-1  lowers conductivity']],
+  rills:[[0,'Off: no rills (whole surface is interrill)'],[1,'On: user-defined rills']],
+  rill_uniform:[[1,'Same depth over the whole plane'],[0,'Deepens downslope (value is for the bottom)']]};
+/* "?" help, from the user guide (Chapter 3 definitions, appendices, section 5.1). A note taken from reading the model's source instead of the guide says so. */
+const HELP = {
+ length:['Length of the plane in the direction of flow, in metres. In a cascade this form sets the characteristic length to the sum of the plane lengths.','this form'],
+ width:['Width of the plane across the slope, in metres.','this form'],
+ slope:['Average slope of the plane, m/m. The guide defines the interrill slope (SIR) as the average slope of an unrilled plane. This form writes it as both the interrill and the rill slope; with no rills the model ignores the rill slope.','guide Table 3.1, Appendix 2'],
+ manning:['Manning\'s n for a plane without rills, allowing for particle roughness, microtopography, cover and rock fragments. Pick a cover below for guide values. Use the upper end of a range for coarse-textured soils and the lower end for fine ones. Runoff volume and peak are not very sensitive to it, but it shapes the rising limb of the hydrograph (and the peak in short storms), so it is useful for calibration.','guide Appendix 3, Section 5.1'],
+ fmin:['Saturated hydraulic conductivity of the soil itself, mm/h. Do not adjust it for plant cover or rock: the model does that from plant base, rock fraction and pavement. If your value was measured under vegetation or rock cover, use it as measured and set plant base fraction, rock fraction and pavement fraction to 0. Choosing a soil texture fills a guide mean.','guide Table 3.1, Appendix 4 (Table A4.2)'],
+ g:['Effective net capillary drive of the soil, mm. Choosing a soil texture fills the guide mean for that texture.','guide Table 3.1, Appendix 4 (Table A4.1)'],
+ porosity:['Porosity of the soil as a fraction (0.46, not 46 %). The guide gives the unit as % v/v but this form uses fractions. From reading the source, infiltration depends on maximum minus initial moisture, so porosity mainly sets the upper limit for maximum moisture; in a sensitivity test it had no effect on the results.','guide Appendix 4 (Table A4.1); source check'],
+ theta_i:['Initial volumetric moisture at the start of the storm, as a fraction. If estimated it must lie between the residual moisture (THR) and the maximum moisture. Choosing a texture shows its THR.','guide Table 3.1, Appendix 4'],
+ theta_max:['Maximum moisture content of the soil, as a fraction; it cannot exceed porosity. Choosing a texture fills the guide value.','guide Table 3.1, Appendix 4'],
+ roc:['Fraction (0 to 1) of the soil occupied by rock fragments, which reduces the conductivity. Use 0 if the conductivity you entered was measured with the rock fragments in place.','guide Table 3.1, Appendix 5'],
+ cover:['Proportion (0 to 1) of the ground obscured by vegetation seen from above. Include ground vegetation, mulch and litter as well as trees and bushes. (Table 3.1 says percentage; Appendix 7 and this form use a fraction.)','guide Appendix 7'],
+ plant_height:['Height from which intercepted raindrops fall, in cm. Count ground vegetation, mulch and litter: it can be near zero under dense ground cover or litter, but is the canopy height over bare soil under trees. Table A7.2 gives heights in metres: multiply by 100.','guide Table 3.1, Appendix 7'],
+ interception:['Maximum interception storage of the plant cover, mm. Guide values for mature plants are in Table A7.1; use the picker below.','guide Appendix 7 (Table A7.1)'],
+ plant_base:['Basal area of the vegetation as a fraction (0 to 1). Model outputs are highly sensitive to it because it reduces the conductivity. Set it to 0 if the conductivity was measured under the cover.','guide Appendix 7 (Table A7.3), Section 5.1.2'],
+ plant_angle:['Average acute angle between the plant stems and the ground, in degrees. Guide values for mature plants are in Table A7.2. If there is no dominant angle, test the sensitivity.','guide Appendix 7 (Table A7.2)'],
+ plant_shape:['Leaf shape: 1 for bladed leaves (grasses, cereals) and needles, 2 for broad leaves, 0 when there is no vegetation (this sets stemflow to zero).','guide Table 3.1, Appendix 7'],
+ d50:['Median particle size from a standard particle-size analysis (USDA classes), in micrometres. It is not set from texture.','guide Table 3.1'],
+ erodibility:['Detachability of the soil by raindrop impact, g/J. By guide advice use the mean for a sealed or compacted soil, the high value for loose moist soil and the low value for loose dry soil; take low values for aggregate-stable soils (high organic content) and high values for less stable ones. It can also be used for calibration. It only affects splash detachment, which in the reference case contributes little to the sediment leaving the plane.','guide Appendix 9 (Table A9.1), Section 5.1.1; last point from the source'],
+ cohesion:['Soil cohesion at saturation, kPa, measured with a torvane. Guide values are for bare soil: add a root value (Table A9.3) when vegetated. Use low values near saturation or when extremely dry (THI below about 0.1). In the model it reduces flow detachment by a factor of 0.79 exp(-0.85 x cohesion) (0.335 at or below 1 kPa), so values of a few kPa and above switch flow erosion almost off.','guide Table 3.1, Appendix 9 (Tables A9.2, A9.3), Section 5.1.1; formula from the source'],
+ pave:['Fraction of the surface covered by non-erodible material (rock fragments, concrete, tarmac). It reduces splash detachment in proportion and, with the stone indicator, changes the effect of rock on conductivity.','guide Table 3.1'],
+ storage:['RECS: the average local depth of water when the surface is completely covered, mm (the mean of the highest-minus-lowest height on each roughness transect). It drives infiltration after rain stops. It is NOT the depression storage: that comes from the roughness ratio RFR.','guide Table 3.1, Appendix 6'],
+ rfr:['Roughness of the surface measured downslope, in cm/m (per cent): (Y - X) / Y x 100, where Y is the true surface length and X the straight-line length (a 1 m chain with 3 mm links). The model uses it in two places: it sets the depression storage, D = exp(-6.66 + 0.27 RFR) mm, which must fill before runoff starts, and above about 2.9 it adds a roughness height to the interrill Manning n. 0 means a smooth surface (storage about 0.001 mm). Table A6.1 values are for freshly tilled soil: multiply by (0.4 + 0.025 x clay %) for the soil, then by exp(-0.7 x CUMKE), CUMKE being the rain kinetic energy in kJ/m2 since tillage.','guide Section 4.3, eq. 20-21, Appendix 6; Manning n addition from model source'],
+ particle_density:['Specific gravity of the sediment particles, g/cm³ (Mg/m³). Normally 2.65; this form\'s example uses 2.6.','guide Table 3.1'],
+ rills:['Switch on to give the plane rills of a size you define. Water then runs from the interrill surface into the rills and down them, and the model reports rill and interrill erosion separately. Off, the whole plane is treated as one interrill surface. A plane without rills ignores everything in this section.','guide Chapter 3, Appendix 8'],
+ rill_number:['The number of rills across the plane width. They are taken as evenly spaced: spacing is width ÷ number, and interrill flow runs half of the gap between rills to reach one.','guide Appendix 8 (DEPNO)'],
+ rill_width:['Width of the rill bottom, in metres. The top width is this plus twice side slope × depth, and must be less than the spacing.','guide Appendix 8 (RILLW)'],
+ rill_depth:['Rill depth in metres (the model can estimate it if left blank; this form asks for it). Very small rills can fill completely with deposited sediment, and then the model stops with an "excess rill fill" error: use larger or fewer rills. If you choose "deepens downslope" this is the depth at the bottom of the plane.','guide Appendix 8 (RILLD)'],
+ rill_side:['Side slope of the rill walls as horizontal distance per unit depth (1 : x). 0 is a vertical wall, 1 is 45°.','guide Appendix 8 (ZLR)'],
+ rill_uniform:['"Same depth" holds the rill dimensions constant. "Deepens downslope" lets the rill start shallow at the top and reach the value you gave at the bottom (depth scales with the square root of distance); the source applies it only to a plane that receives no runoff from another plane. Note: the guide text describes this switch the opposite way round; this form follows the model source and the guide Chapter 3 definition.','model source (eplanel), guide Appendix 8 (RS)'],
+ interrill_slope:['Slope of the surface towards the rills. It must be steeper than the slope along the rills (the Slope field in Geometry becomes the slope along the rills). Leave 0 to use the model default of 1.4 × that slope. To compare a rilled plane fairly with the same plane without rills, set it just above the rill slope (for example 0.096 for a slope of 0.095): the default makes the interrill surface steeper, which raises runoff and interrill erosion on its own.','guide Appendix 8 (SIR); test runs'],
+ rill_manning:['Manning n for flow in the rills. Leave 0 to use the plane Manning n above for both rill and interrill flow.','guide Appendix 8 (MANN rill)'],
+ stone:['+1 where rock fragments sit on the surface and protect it from sealing, or lie in a macroporous soil (they raise conductivity); -1 where they sit on or in a sealed surface (they lower it). It matters only when rock or pavement fractions are above zero.','guide Table 3.1, Appendix 5']
+};
+let spec = null, lastSpec = null, results = null, csvs = null;
+let GUIDE = {list:[], by:{}};   // soil-texture guide values (Tables A4.1, A4.2, A9.1, A9.2 of the user guide)
+const $ = id => document.getElementById(id);
+const COLORS = i => `var(--c${(i%8)+1})`;
+const fmt=(x,d=2)=>Number(x).toLocaleString('en-GB',{minimumFractionDigits:d,maximumFractionDigits:d});
+
+function fieldHTML(pi,k,lab,unit,grp){
+  const q=HELP[k]?`<button type="button" class="q" data-help="${k}" data-grp="${grp}" aria-expanded="false" aria-label="Help: ${lab}">?</button>`:'';
+  const ctl=SELECTS[k]?`<select id="p${pi}_${k}" data-p="${pi}" data-k="${k}">${SELECTS[k].map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select>`
+    :`<input id="p${pi}_${k}" data-p="${pi}" data-k="${k}" type="number" step="any">`;
+  return `<div class="f"><label for="p${pi}_${k}">${lab}${unit?`<i>${unit}</i>`:''}${q}</label>${ctl}</div>`;
+}
+/* pickers: choose a guide entry and the form fills the matching fields. The choice is kept on the plane and recorded in the CSV. */
+const PICKS = {
+  manning_ref:{grp:'Geometry',label:'Roughness cover',ref:'Table A3.1',list:()=>GUIDE.manning||[],name:o=>o.label,
+    fill:(el,pl,o)=>setField(el,pl,'manning',o.mean),
+    text:o=>`<b>${esc(o.label)}</b>, guide Table A3.1: n ${o.low==null?'(no low given)':o.low} to ${o.high==null?'(no high given)':o.high}, mean ${o.mean}. Filled with the mean.`},
+  veg_ref:{grp:'Cover',label:'Vegetation type',ref:'Table A7.2',list:()=>GUIDE.veg||[],name:o=>o.name,
+    fill:(el,pl,o)=>{ setField(el,pl,'plant_height',+(((o.height[0]+o.height[1])/2)*100).toFixed(1)); setField(el,pl,'plant_angle',Math.round((o.angle[0]+o.angle[1])/2)); setField(el,pl,'plant_shape',o.shape); },
+    text:o=>`<b>${esc(o.name)}</b>, guide Table A7.2 (mature plants): height ${o.height[0]} to ${o.height[1]} m, stem angle ${o.angle[0]} to ${o.angle[1]}°, shape ${o.shape}. Filled with mid-values (height converted to cm). Adjust for growth stage, and for ground cover or litter, which can bring the effective height near zero.`},
+  dint_ref:{grp:'Cover',label:'Interception',ref:'Table A7.1',list:()=>GUIDE.dint||[],name:o=>o.name,
+    fill:(el,pl,o)=>setField(el,pl,'interception',o.value),
+    text:o=>`<b>${esc(o.name)}</b>, guide Table A7.1: ${o.value} mm for mature plants. Use less for younger plants.`},
+  pbase_ref:{grp:'Cover',label:'Basal area',ref:'Table A7.3',list:()=>GUIDE.pbase||[],name:o=>o.label,
+    fill:(el,pl,o)=>setField(el,pl,'plant_base',o.value),
+    text:o=>`<b>${esc(o.label)}</b>, guide Table A7.3: ${o.value}. Set plant base fraction to 0 instead if the conductivity was measured under this cover.`},
+  till_ref:{grp:'Surface roughness',label:'Tillage practice',ref:'Table A6.1',list:()=>GUIDE.tillage||[],name:o=>o.name,
+    fill:(el,pl,o)=>setField(el,pl,'rfr',+((o.range[0]+o.range[1])/2).toFixed(1)),
+    text:o=>`<b>${esc(o.name)}</b>, guide Table A6.1: RFR ${o.range[0]===o.range[1]?o.range[0]:o.range[0]+' to '+o.range[1]} cm/m immediately after tillage. Filled with the mid-value. Reduce it for the soil's clay content and for the rain since tillage (equations A6.1 and A6.2, in the help above).`},
+  root_ref:{grp:'Erosion',label:'Plant roots (adds to cohesion)',ref:'Table A9.3',list:()=>GUIDE.root||[],name:o=>o.name,fill:null,
+    text:o=>`<b>${esc(o.name)}</b>, guide Table A9.3: roots add ${o.range[0]===o.range[1]?o.range[0]:o.range[0]+' to '+o.range[1]} kPa to the bare-soil cohesion (mature plants; less when young). Add it to the cohesion above yourself: the range is too wide to choose for you.`}
+};
+function pickHTML(pi,grp){
+  const ps=Object.entries(PICKS).filter(([,c])=>c.grp===grp && c.list().length); if(!ps.length) return '';
+  return `<div class="grid picks">`+ps.map(([k,c])=>`<div class="f" style="grid-column:span 2"><label for="p${pi}_${k}">${c.label}<i>${c.ref}</i></label><select id="p${pi}_${k}" data-pick="${k}"><option value="">Choose to fill from the guide…</option>${c.list().map(o=>`<option>${esc(c.name(o))}</option>`).join('')}</select><span class="hint" data-pickhint="${k}"></span></div>`).join('')+'</div>';
+}
+function renderPlanes(){
+  const host=$('planes'); host.innerHTML='';
+  spec.planes.forEach((pl,pi)=>{
+    const n=pi+1, others=spec.planes.map((_,j)=>j+1).filter(j=>j!==n);
+    const el=document.createElement('div'); el.className='plane';
+    el.innerHTML=`<header><h3><span class="dot" style="background:${COLORS(pi)}"></span>Plane ${n}${n===spec.planes.length?' (outlet)':''}</h3>
+      <div class="f" style="flex-direction:row;align-items:center;gap:8px"><label for="p${pi}_upstream">Receives runoff from</label>
+      <select id="p${pi}_upstream" data-p="${pi}" data-k="upstream" style="width:auto"><option value="0">no other plane</option>${others.map(j=>`<option value="${j}">Plane ${j}</option>`).join('')}</select>
+      ${spec.planes.length>1&&n===spec.planes.length?`<button class="ghost" type="button" data-remove="${pi}">Remove</button>`:''}</div></header>`+
+      PLANE_FIELDS.map(([g,fs])=>(g==='Soil water'?rillBlock(pi)+texBlock(pi):'')+`<div><p class="grp">${g}</p><div class="grid">${fs.map(f=>fieldHTML(pi,...f,g)).join('')}</div><p class="helpbox" data-hb="${g}" hidden></p>${pickHTML(pi,g)}${g==='Surface roughness'?'<p class="gh" data-gh="rfr"></p>':''}${g==='Soil water'?'<p class="gh" data-gh="soil"></p>':''}${g==='Erosion'?'<p class="gh" data-gh="ero"></p>':''}</div>`).join('')+
+      `<details><summary>More settings</summary><div class="grid">${MORE_FIELDS.map(f=>fieldHTML(pi,...f,'More')).join('')}</div><p class="helpbox" data-hb="More" hidden></p></details>`;
+    host.appendChild(el);
+    el.querySelectorAll('[data-k]').forEach(inp=>{ inp.value=pl[inp.dataset.k]; inp.addEventListener('input',()=>{ pl[inp.dataset.k]=inp.type==='number'?inp.value:Number(inp.value); updateHints(el,pl); }); });
+    const ts=el.querySelector('[data-t]'), cs=el.querySelector('[data-c]');
+    if(ts){ ts.value=pl.texture||''; cs.value=pl.condition||'compacted';
+      ts.addEventListener('change',()=>{ pl.texture=ts.value; applyGuide(el,pl,true); });
+      cs.addEventListener('change',()=>{ pl.condition=cs.value; applyGuide(el,pl,false); }); }
+    el.querySelectorAll('[data-pick]').forEach(sel=>{ const k=sel.dataset.pick, c=PICKS[k];
+      const find=v=>c.list().find(x=>c.name(x)===v), show=()=>{ const o=find(pl[k]); el.querySelector(`[data-pickhint="${k}"]`).innerHTML=o?c.text(o):''; };
+      sel.value=pl[k]||''; show();
+      sel.addEventListener('change',()=>{ pl[k]=sel.value; const o=find(sel.value); if(o&&c.fill) c.fill(el,pl,o); show(); updateHints(el,pl); }); });
+    el.querySelectorAll('[data-help]').forEach(b=>b.addEventListener('click',()=>{
+      const k=b.dataset.help, box=el.querySelector(`[data-hb="${b.dataset.grp}"]`), was=b.getAttribute('aria-expanded')==='true';
+      el.querySelectorAll('[data-help]').forEach(x=>x.setAttribute('aria-expanded','false')); el.querySelectorAll('.helpbox').forEach(x=>x.hidden=true);
+      if(was) return; b.setAttribute('aria-expanded','true'); const [t,ref]=HELP[k];
+      box.innerHTML=`<b>${esc(b.getAttribute('aria-label').replace('Help: ',''))}.</b> ${esc(t)} <span class="hint">(${esc(ref)})</span>`; box.hidden=false; }));
+    updateHints(el,pl);
+    const rm=el.querySelector('[data-remove]'); if(rm) rm.onclick=()=>{ collect(); spec.planes.pop(); spec.planes.forEach(p=>{ if(p.upstream>spec.planes.length) p.upstream=0; }); renderPlanes(); };
+  });
+}
+function rillBlock(pi){
+  return `<div><p class="grp">Rills</p><div class="grid">${fieldHTML(pi,'rills','Rills','','Rills')}</div>
+    <div data-rillbox hidden><div class="grid" style="margin-top:8px">${RILL_FIELDS.map(f=>fieldHTML(pi,...f,'Rills')).join('')}</div></div>
+    <p class="helpbox" data-hb="Rills" hidden></p><p class="gh" data-gh="rill"></p></div>`;
+}
+function rfrInfo(pl){
+  const r=Number(pl.rfr), n=Number(pl.manning);
+  if(!(r>=0)) return '';
+  const D=Math.exp(-6.66+0.27*r), rfh=60*r/29-6;
+  let h=`Depression storage on this plane: <b>${D<0.01?D.toFixed(4):fmt(D,2)} mm</b>`+(r===0?' (smooth surface: practically none)':'')+'.';
+  if(rfh>0&&n>0){ const rr=0.00087*Math.pow(rfh,1.25), nt=Math.pow(Math.pow(n,1.5)+Math.pow(rr,1.5),0.67);
+    h+=` Roughness height ${fmt(rfh,1)} mm raises the interrill Manning n from ${fmt(n,3)} to <b>${fmt(nt,3)}</b>. <span class="why">If the Manning n above already allows for a rough, tilled surface, this counts the roughness twice: use a smoother Manning n.</span>`; }
+  else if(rfh>0) h+=` Roughness height ${fmt(rfh,1)} mm will also raise the interrill Manning n.`;
+  else h+=' <span class="why">Below about 2.9 the model leaves Manning n unchanged.</span>';
+  if(r>40) h+=' <span class="out">Above the guide range (13 to 35).</span>';
+  return h;
+}
+function rillInfo(pl){
+  if(!(Number(pl.rills))) return {on:false,html:'<span class="why">Off: the whole plane is treated as interrill surface.</span>'};
+  const W=+pl.width,n=+pl.rill_number,w=+pl.rill_width,d=+pl.rill_depth,z=+pl.rill_side,S=+pl.slope;
+  let sir=+pl.interrill_slope; const out=[]; let html='';
+  if(!(n>=1&&w>0&&d>0&&z>=0&&W>0)) return {on:true,html:'<span class="out">Rills need a number of 1 or more, a width and depth above 0, and a side slope of 0 or more.</span>'};
+  const top=w+2*z*d, sp=W/n, gap=sp-top;
+  if(!(sir>0)) sir=1.4*S;
+  const ofl=(sp-w)/2/Math.sin(Math.atan(sir/S));
+  html=`Rill spacing ${fmt(sp,2)} m; rill top width ${fmt(top,3)} m; interrill strip between rill edges ${fmt(gap,2)} m; rill cross-section ${fmt(d*(w+z*d),4)} m²; interrill slope used ${fmt(sir,4)}.`;
+  if(n*top>=W) out.push(`The rills (top width ${fmt(top,3)} m each) do not fit in the plane width: the model would stop. Fewer or narrower rills are needed.`);
+  if(!(S>0)) out.push('The slope along the rills must be above 0.');
+  else if(sir<=S) out.push('The interrill slope must be steeper than the slope along the rills.');
+  if(!out.length && ofl>1.5) html+=` <span class="why">Interrill flow path to a rill is about ${fmt(ofl,2)} m: longer than 1.5 m, so the model routes interrill flow along that path instead of treating it as a thin sheet (source note).</span>`;
+  return {on:true,html:html+(out.length?`<br><span class="out">${out.join(' ')}</span>`:'')};
+}
+function texBlock(pi){
+  if(!GUIDE.list.length) return '';
+  return `<div><p class="grp">Soil texture: fills the soil water and erosion values from the user guide</p><div class="grid">
+    <div class="f" style="grid-column:span 2"><label for="p${pi}_tex">Soil texture</label><select id="p${pi}_tex" data-t="${pi}"><option value="">Choose a texture…</option>${GUIDE.list.map(t=>`<option>${t.name}</option>`).join('')}</select></div>
+    <div class="f" style="grid-column:span 2"><label for="p${pi}_cond">Surface state<i>sets erodibility and cohesion</i></label><select id="p${pi}_cond" data-c="${pi}"><option value="loose_dry">Loose and dry</option><option value="compacted" selected>Sealed or compacted</option><option value="loose_moist">Loose and moist</option></select></div>
+    </div><p class="gh" data-gh="tex"></p></div>`;
+}
+const FIELD_LABEL={fmin:'conductivity',g:'capillary drive',porosity:'porosity',theta_max:'maximum moisture',erodibility:'erodibility',cohesion:'cohesion'};
+function setField(el,pl,k,v){ pl[k]=v; el.querySelector(`[data-k="${k}"]`).value=v; }
+/* Fill from the guide.  soil=true also fills the four soil-water values; the surface-state
+   selector only re-fills erodibility and cohesion, so hand-edited soil values are kept. */
+function fbeta(c){ c=Number(c); if(!(c>=0)) return NaN; return Math.min(1, c<=1?0.335:0.79*Math.exp(-0.85*c)); }
+function updateHints(el,pl){
+  updateHintsCore(el,pl);
+  const ri=rillInfo(pl), rb=el.querySelector('[data-rillbox]'), rg=el.querySelector('[data-gh="rill"]');
+  if(rb) rb.hidden=!ri.on; if(rg) rg.innerHTML=ri.html;
+  const rf=el.querySelector('[data-gh="rfr"]'); if(rf) rf.innerHTML=rfrInfo(pl);
+  const he=el.querySelector('[data-gh="ero"]'), hs=el.querySelector('[data-gh="soil"]'), f=fbeta(pl.cohesion);
+  if(he&&!isNaN(f)){ const t=f<0.001?f.toExponential(1):f.toFixed(f<0.01?4:3);
+    he.insertAdjacentHTML('beforeend',`<br><b>Flow detachment factor at ${esc(pl.cohesion)} kPa: ${t}</b> <span class="why">(the model multiplies the flow-detachment rate by 0.79·exp(−0.85·cohesion), or 0.335 at or below 1 kPa)</span>`+(f<0.05?' <span class="out">Flow erosion is almost switched off at this cohesion; sediment will be set by cohesion, not by erodibility.</span>':'')); }
+  const g=GUIDE.by[pl.texture];
+  if(hs&&g){ const low=Number(pl.theta_i)<g.thr;
+    hs.insertAdjacentHTML('beforeend',`<br><span class="${low?'out':''}">Residual moisture (THR) for ${g.name}: ${g.thr}${low?' — initial moisture is below it':''}${g.thr_note?` [guide value looks misprinted: ${esc(g.thr_note)}]`:''}</span>`); }
+}
+function applyGuide(el,pl,soil){
+  const g=GUIDE.by[pl.texture], msg=el.querySelector('[data-gh="tex"]'), filled=[], notes=[];
+  if(!g){ msg.textContent=''; updateHints(el,pl); return; }
+  if(soil){ setField(el,pl,'fmin',g.fmin[1]); setField(el,pl,'g',g.g[1]); setField(el,pl,'porosity',g.porosity[1]); setField(el,pl,'theta_max',g.theta_max);
+    filled.push('conductivity','capillary drive','porosity','maximum moisture'); }
+  const st=pl.condition||'compacted', ix={loose_dry:0,compacted:1,loose_moist:2}[st];
+  if(g.erod){ setField(el,pl,'erodibility',g.erod[ix]); filled.push('erodibility'); }
+  else notes.push('the guide gives no erodibility for this texture (Table A9.1), so erodibility is unchanged');
+  if(!g.coh) notes.push('the guide gives no cohesion for this texture (Table A9.2), so cohesion is unchanged');
+  else if(g.coh_note) notes.push(`cohesion is unchanged because the guide's row for this texture is inconsistent (${g.coh_note}); the printed range is ${g.coh[0]}–${g.coh[2]} kPa`);
+  else if(st==='compacted'){ if(g.coh[3]==null) notes.push('the guide gives no compacted cohesion for this texture, so cohesion is unchanged'); else { setField(el,pl,'cohesion',g.coh[4]); filled.push('cohesion'); } }
+  else { setField(el,pl,'cohesion',g.coh[1]); filled.push('cohesion'); }
+  const stl={loose_dry:'loose and dry',compacted:'sealed or compacted',loose_moist:'loose and moist'}[st];
+  msg.innerHTML=`Filled from the guide for <b>${g.name}</b> (soil water values: mean; erodibility and cohesion: ${stl} surface): ${filled.join(', ')}.`+(notes.length?`<br><span class="out">Not filled:</span> ${notes.join('; ')}.`:'')+'<br><span class="why">Median particle size, pavement fraction and the cover values are not set from texture. Guide cohesion is for bare saturated soil; add a root value if vegetated.</span>';
+  updateHints(el,pl);
+}
+function rng(a){ return `${a[0]}–${a[2]}`; }
+function updateHintsCore(el,pl){
+  const hs=el.querySelector('[data-gh="soil"]'), he=el.querySelector('[data-gh="ero"]');
+  const g=GUIDE.by[pl.texture];
+  if(!g){ if(hs) hs.innerHTML=GUIDE.list.length?'<span class="why">Pick a texture to fill these from the user guide (Tables A4.1 and A4.2), or type your own values. Conductivity should be the bare-soil value; if you measured it under a plant or stone cover, set plant base fraction to 0 in More settings (guide A4).</span>':''; if(he) he.innerHTML='<span class="why">Pick a soil texture above for guide ranges.</span>'; return; }
+  const bits=[['fmin','Conductivity',g.fmin,'mm/h'],['g','Capillary drive',g.g,'mm'],['porosity','Porosity',g.porosity,'']].map(([k,l,a,u])=>{
+    const v=Number(pl[k]), out=!(v>=a[0]&&v<=a[2]);
+    return `<span class="${out?'out':''}">${l}: guide ${rng(a)}${u?' '+u:''}, mean ${a[1]}${out?' — outside this range':''}</span>`; });
+  const tm=Number(pl.theta_max), ti=Number(pl.theta_i), po=Number(pl.porosity);
+  bits.push(`<span class="${tm>po?'out':''}">Maximum moisture: guide mean ${g.theta_max}${tm>po?' — cannot exceed porosity':''}</span>`);
+  if(ti>tm) bits.push('<span class="out">Initial moisture is above maximum moisture</span>');
+  hs.innerHTML=`<b>${g.name}</b> (guide Tables A4.1, A4.2). Values outside the range are allowed but flagged.<br>`+bits.join(' · ');
+  let e=[];
+  if(g.erod) e.push(`Erodibility, guide: ${g.erod[0]} loose dry · ${g.erod[1]} sealed or compacted · ${g.erod[2]} loose moist g/J (A9.1)`);
+  else e.push('Erodibility: the guide gives no value for this texture (A9.1)');
+  if(g.coh){ e.push(`Cohesion of bare saturated soil: ${g.coh[0]}–${g.coh[2]} kPa uncompacted (mean ${g.coh[1]})`+(g.coh[3]!=null?`, ${g.coh[3]}–${g.coh[5]} compacted (mean ${g.coh[4]})`:'')+' (A9.2); add a root value from the guide if vegetated'+(g.coh_note?` <span class="out">[guide misprint: ${g.coh_note}]</span>`:'')); }
+  else e.push('Cohesion: the guide gives no value for this texture (A9.2)');
+  if(he) he.innerHTML=e.join('<br>');
+}
+function renderRain(){
+  const tb=$('raintable').querySelector('tbody'); tb.innerHTML='';
+  spec.rain.forEach((r,i)=>{
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td><input type="number" step="any" min="0" data-r="${i}" data-c="0" aria-label="Time, row ${i+1}"></td><td><input type="number" step="any" min="0" data-r="${i}" data-c="1" aria-label="Depth, row ${i+1}"></td><td class="rate" id="rate${i}"></td>
+      <td>${spec.rain.length>2?`<button class="ghost" type="button" data-del="${i}" aria-label="Remove row ${i+1}">✕</button>`:''}</td>`;
+    tb.appendChild(tr);
+    tr.querySelectorAll('input').forEach(inp=>{ inp.value=r[inp.dataset.c]; inp.addEventListener('input',()=>{ r[inp.dataset.c]=inp.value; updateRates(); }); });
+    const d=tr.querySelector('[data-del]'); if(d) d.onclick=()=>{ collect(); spec.rain.splice(i,1); renderRain(); };
+  });
+  updateRates();
+}
+function updateRates(){
+  spec.rain.forEach((r,i)=>{
+    const c=$('rate'+i); if(!c) return;
+    if(i===0){ c.textContent=''; return; }
+    const dt=Number(r[0])-Number(spec.rain[i-1][0]), dd=Number(r[1])-Number(spec.rain[i-1][1]);
+    c.textContent = dt>0 ? fmt(dd/dt*60,1)+' mm/h' : '';
+  });
+  const last=Number(spec.rain[spec.rain.length-1][0]), dur=Number($('duration').value);
+  $('rainnote').textContent = last<dur ? `Rain stops at ${last} min; none falls after the last row up to the ${dur} min end of the run.` :
+    (last>dur ? 'Rows after the end of the run are ignored.' : '');
+}
+function collect(){
+  spec.title=$('title').value; spec.duration=$('duration').value; spec.timestep=$('timestep').value; spec.temperature=$('temperature').value;
+}
+function load(s){
+  spec=JSON.parse(JSON.stringify(s));
+  $('title').value=spec.title; $('duration').value=spec.duration; $('timestep').value=spec.timestep; $('temperature').value=spec.temperature;
+  renderRain(); renderPlanes();
+}
+$('duration').addEventListener('input',updateRates);
+$('addrain').onclick=()=>{ collect(); const l=spec.rain[spec.rain.length-1]; spec.rain.push([Number(l[0])+10,l[1]]); renderRain(); };
+$('fillrain').onclick=()=>{ collect(); const i=Number($('cr_i').value), d=Number($('cr_d').value); if(!(i>=0&&d>0)) return;
+  spec.rain=[[0,0],[d,+(i*d/60).toFixed(4)]]; renderRain(); };
+$('addplane').onclick=()=>{ collect(); if(spec.planes.length>=8) return; const last=spec.planes[spec.planes.length-1];
+  spec.planes.push(Object.assign({},last,{upstream:spec.planes.length})); renderPlanes(); };
+$('reset').onclick=async()=>{ load(await (await fetch('/api/defaults')).json()); $('messages').innerHTML=''; };
+
+/* ===================== running ===================== */
+function nice(s){ return String(s).replace(/element (\d+)/gi,'Plane $1').replace(/gage \d+/gi,'rainfall').replace('THI/THMX','moisture').replace(/\bSIR\b/,'slope').replace(/\bXL\b/,'length').replace(/\bFMIN\b/,'conductivity').replace(/\bPOR\b/,'porosity'); }
+function esc(s){ return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function showMessages(out){
+  const m=$('messages'); m.innerHTML='';
+  if(!out.ok){
+    let list = out.problems || (out.issues||[]).filter(s=>s.startsWith('[ERROR]')).map(s=>s.replace('[ERROR] ',''));
+    const head = out.stage==='run' ? 'The model stopped: ' : out.stage==='output' ? 'The model finished but its output could not be read: ' : '';
+    let h = list && list.length>1 ? `<b>Please fix:</b><ul>${list.map(x=>`<li>${esc(nice(x))}</li>`).join('')}</ul>` : `<b>${head}</b>${esc(nice(list&&list.length?list[0]:out.error))}`;
+    if(out.aux) h+=`<pre>${esc(out.aux)}</pre>`;
+    m.innerHTML=`<div class="err">${h}</div>`; return;
+  }
+  const warn=(out.issues||[]).filter(s=>!s.startsWith('[ERROR]'));
+  if(warn.length) m.innerHTML=`<div class="note"><b>Checks</b><ul style="margin:4px 0 0;padding-left:20px">${warn.map(s=>`<li>${esc(nice(s.replace(/^\[(\w+)\] /,(a,l)=>l[0]+l.slice(1).toLowerCase()+': ')))}</li>`).join('')}</ul></div>`;
+}
+$('run').onclick=async()=>{
+  collect(); const btn=$('run'); btn.disabled=true; $('status').textContent='Running…';
+  try{
+    const resp=await fetch('/api/run',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(spec)});
+    const out=await resp.json(); showMessages(out);
+    if(out.ok){ lastSpec=JSON.parse(JSON.stringify(spec)); results=out.results; csvs={results:out.csv,settings:out.settings_csv}; $('dl_note').textContent=out.csv?'':'The files could not be prepared for this run.'; $('status').textContent=`Done in ${out.seconds} s`; showResults(); }
+    else { $('status').textContent=''; }
+  }catch(e){ showMessages({ok:false,stage:'form',error:'Could not reach the service: '+e.message}); $('status').textContent=''; }
+  btn.disabled=false;
+};
+
+/* ===================== downloads ===================== */
+function fileStem(){
+  const t=(lastSpec.title||'run').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'run';
+  const d=new Date(), p=n=>String(n).padStart(2,'0');
+  return `eurosem_${t}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
+}
+function download(text,name){
+  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
+  const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+$('dl_results').onclick=()=>{ if(csvs&&csvs.results) download(csvs.results,fileStem()+'_results.csv'); };
+$('dl_settings').onclick=()=>{ if(csvs&&csvs.settings) download(csvs.settings,fileStem()+'_settings.csv'); };
+
+/* ===================== results ===================== */
+const ML=52, MR=12, MT=8, MB=20;
+let W=800, ids=[], T=[], tmax=1, shown={};
+const E=id=>results.elements[id];
+function niceMax(v){ if(v<=0) return 1; const p=Math.pow(10,Math.floor(Math.log10(v))), f=v/p; return (f<=1?1:f<=2?2:f<=2.5?2.5:f<=5?5:10)*p; }
+const tf=v=> v>=1000?(v/1000)+'k':String(Math.round(v*10)/10);
+const panels=[
+ {key:'rain',title:'Rainfall intensity',unit:'mm/h',h:90,type:'bars',get:id=>E(id).hydrograph.rain_mmh,once:true},
+ {key:'q',title:'Discharge',unit:'mm/h',h:170,type:'line',get:id=>E(id).hydrograph.q_mmh},
+ {key:'qs',title:'Sediment discharge',unit:'kg/min',h:150,type:'line',get:id=>E(id).hydrograph.qs_kgmin},
+ {key:'cs',title:'Cumulative sediment out',unit:'kg',h:150,type:'line',get:id=>E(id).hydrograph.cum_sediment_kg}];
+const colOf=id=>COLORS(Number(id)-1);
+
+function drawPanel(p){
+  const list=p.once?[ids[0]]:ids.filter(i=>shown[i]);
+  const iw=W-ML-MR, ih=p.h-MT-MB;
+  const ymax=niceMax(Math.max(...(p.once?[ids[0]]:ids).flatMap(i=>p.get(i))));
+  const X=t=>ML+t/tmax*iw, Y=v=>MT+ih-(v/ymax)*ih;
+  let s=`<svg width="${W}" height="${p.h}" viewBox="0 0 ${W} ${p.h}" role="img" aria-label="${p.title} against time">`;
+  for(let k=0;k<=4;k++){ const v=ymax*k/4; s+=`<line x1="${ML}" x2="${W-MR}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--grid)"/><text x="${ML-8}" y="${Y(v)+4}" text-anchor="end">${tf(v)}</text>`; }
+  const step=tmax>200?50:tmax>100?20:10;
+  for(let t=0;t<=tmax;t+=step) s+=`<text x="${X(t)}" y="${p.h-4}" text-anchor="middle">${t}</text>`;
+  s+=`<line x1="${ML}" x2="${W-MR}" y1="${Y(0)}" y2="${Y(0)}" stroke="var(--line)"/>`;
+  if(p.type==='bars'){ const d=p.get(ids[0]), bw=Math.max(1,iw/d.length-1);
+    d.forEach((v,k)=>{ if(v>0) s+=`<rect x="${X(T[k])-bw/2}" y="${Y(v)}" width="${bw}" height="${Y(0)-Y(v)}" rx="1.5" fill="var(--rain)"/>`; });
+  } else for(const id of list){ const d=p.get(id);
+    s+=`<path d="${d.map((v,k)=>(k?'L':'M')+X(T[k]).toFixed(1)+' '+Y(v).toFixed(1)).join('')}" fill="none" stroke="${colOf(id)}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>`; }
+  s+=`<line class="cross" x1="0" x2="0" y1="${MT}" y2="${Y(0)}" stroke="var(--ink2)" stroke-dasharray="3 3" style="display:none"/>`;
+  if(p.type==='line') for(const id of list) s+=`<circle class="dotm" data-id="${id}" r="4.5" fill="${colOf(id)}" stroke="var(--surface)" stroke-width="2" style="display:none"/>`;
+  return s+'</svg>';
+}
+function build(){
+  const host=$('plots'); W=Math.max(300,host.clientWidth||W);
+  host.querySelectorAll('.ptw').forEach(n=>n.remove());
+  panels.forEach(p=>{ const d=document.createElement('div'); d.className='ptw'; d.dataset.key=p.key;
+    d.innerHTML=`<div class="ptitle"><b>${p.title}</b><span>${p.unit}</span></div>`+drawPanel(p); host.appendChild(d); });
+  const lab=document.createElement('div'); lab.className='ptw hint'; lab.style.textAlign='center'; lab.textContent='Time since start of event (min)'; host.appendChild(lab);
+}
+function showResults(){
+  ids=Object.keys(results.elements).sort((a,b)=>a-b); T=E(ids[0]).hydrograph.time_min; tmax=T[T.length-1];
+  shown=Object.fromEntries(ids.map(i=>[i,true]));
+  const feeds=lastSpec.planes.map(p=>Number(p.upstream)).filter(Boolean);
+  const outlet=String(ids.map(Number).find(i=>!feeds.includes(i)) || ids[ids.length-1]);
+  const g=results.global, ha=g.basin_area_m2/10000, oe=E(outlet);
+  const tiles=[[fmt(g.runoff_mm,1),'mm','Basin runoff, '+fmt(g.runoff_m3,0)+' m³'],[fmt(g.infiltration_planes_mm,1),'mm','Infiltration'],
+    [fmt(oe.peak_flow_mmh,1),'mm/h','Peak outflow at '+fmt(oe.time_to_peak_min,0)+' min'],
+    [fmt(oe.sediment_total_kg/1000,2),'t','Sediment leaving, '+fmt(oe.sediment_total_kg/1000/ha,2)+' t/ha'],
+    [fmt(g.vol_error_pct,3),'%','Global volume error']];
+  $('tiles').innerHTML=tiles.map(t=>`<div class="tile"><div class="v">${t[0]}<small>${t[1]}</small></div><div class="l">${t[2]}</div></div>`).join('');
+  const ctl=$('controls'); ctl.innerHTML='';
+  ids.forEach(id=>{ const b=document.createElement('button'); b.type='button'; b.className='chip'; b.setAttribute('aria-pressed','true');
+    b.innerHTML=`<i style="background:${colOf(id)}"></i>Plane ${id}${id===outlet?' (outlet)':''}`;
+    b.onclick=()=>{ const on=b.getAttribute('aria-pressed')!=='true'; if(!on&&ids.filter(i=>shown[i]).length===1) return; b.setAttribute('aria-pressed',on); shown[id]=on; build(); };
+    ctl.appendChild(b); });
+  const h=document.createElement('span'); h.className='hint'; h.textContent='Move over the charts to read values.'; ctl.appendChild(h);
+  let t='<thead><tr>'+['Plane','Area (ha)','Runoff starts (min)','Runoff lasts (min)','Peak flow (mm/h)','Peak at (min)','Peak sediment (kg/min)','Water out (m³)','Sediment out (kg)','Net erosion (t/ha)','Volume error (%)'].map(x=>`<th>${x}</th>`).join('')+'</tr></thead><tbody>';
+  ids.forEach(id=>{ const e=E(id),hy=e.hydrology,er=e.erosion;
+    t+=`<tr><td><span class="sw" style="background:${colOf(id)}"></span>Plane ${id}</td><td>${fmt(e.contributing_area_ha,2)}</td><td>${fmt(hy.time_to_runoff_min,1)}</td><td>${fmt(hy.runoff_duration_min,1)}</td><td>${fmt(hy.peak_flow_mmh,2)}</td><td>${fmt(hy.time_to_peak_flow_min,1)}</td><td>${fmt(hy.peak_sed_kgmin,1)}</td><td>${fmt(e.outflow_m3,1)}</td><td>${fmt(e.sediment_total_kg,0)}</td><td class="${er.net_tha<0?'neg':''}">${fmt(er.net_tha,2)}${er.net_tha<0?' (deposition)':''}</td><td>${fmt(e.vol_error_pct,3)}</td></tr>`; });
+  $('eltable').innerHTML=t+'</tbody>';
+  const wb=[['Net rainfall',g.total_rainfall_mm,'mm'],['Infiltration, planes',g.infiltration_planes_mm,'mm'],['Storage left on planes',g.storage_planes_mm,'mm'],['Basin runoff',g.runoff_mm,'mm'],['Sum of terms',g.sum_terms_mm,'mm']];
+  $('wbtable').innerHTML='<tbody>'+wb.map(r=>`<tr><td>${r[0]}</td><td>${fmt(r[1],r[1]<1?5:3)} ${r[2]}</td></tr>`).join('')+`<tr><td>Runoff volume</td><td>${fmt(g.runoff_m3,1)} m³</td></tr><tr><td>Global volume error</td><td>${fmt(g.vol_error_pct,4)} %</td></tr></tbody>`;
+  $('results').hidden=false; $('results').style.display='flex'; build();
+  $('results').scrollIntoView({behavior:'smooth',block:'start'});
+}
+const plots=$('plots'), tip=$('tip');
+function clearHover(){ tip.style.display='none'; plots.querySelectorAll('.cross,.dotm').forEach(c=>c.style.display='none'); }
+plots.addEventListener('pointermove',e=>{
+  if(!results) return;
+  const box=plots.getBoundingClientRect(), iw=W-ML-MR, t=(e.clientX-box.left-ML)/iw*tmax;
+  if(t<0||t>tmax){ clearHover(); return; }
+  const k=Math.min(T.length-1,Math.max(0,Math.round(t/(T[1]-T[0])))), x=ML+T[k]/tmax*iw;
+  plots.querySelectorAll('.cross').forEach(c=>{ c.setAttribute('x1',x); c.setAttribute('x2',x); c.style.display=''; });
+  panels.forEach(p=>{ const host=plots.querySelector(`.ptw[data-key="${p.key}"]`); if(!host||p.type!=='line') return;
+    const ymax=niceMax(Math.max(...ids.flatMap(i=>p.get(i)))), ih=p.h-MT-MB;
+    host.querySelectorAll('.dotm').forEach(c=>{ const v=p.get(c.dataset.id)[k]; c.setAttribute('cx',x); c.setAttribute('cy',MT+ih-(v/ymax)*ih); c.style.display=''; }); });
+  let h=`<div class="t">t = ${fmt(T[k],1)} min</div><table><tr><td>Rain</td><td>${fmt(E(ids[0]).hydrograph.rain_mmh[k],1)} mm/h</td></tr>`;
+  ids.filter(i=>shown[i]).forEach(id=>{ const g=E(id).hydrograph;
+    h+=`<tr><td><span class="sw" style="background:${colOf(id)}"></span>Plane ${id}</td><td>${fmt(g.q_mmh[k],2)} mm/h</td></tr><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;sediment</td><td>${fmt(g.qs_kgmin[k],1)} kg/min</td></tr><tr><td>&nbsp;&nbsp;&nbsp;&nbsp;cumulative</td><td>${fmt(g.cum_sediment_kg[k],0)} kg</td></tr>`; });
+  tip.innerHTML=h+'</table>'; tip.style.display='block';
+  const par=tip.offsetParent.getBoundingClientRect(); let left=e.clientX-par.left+14; const tw=tip.offsetWidth;
+  if(left+tw>par.width-4) left=e.clientX-par.left-tw-14; tip.style.left=Math.max(4,left)+'px'; tip.style.top=(e.clientY-par.top+10)+'px';
+});
+plots.addEventListener('pointerleave',clearHover);
+new ResizeObserver(()=>{ if(results&&!$('results').hidden){ const w=plots.clientWidth; if(w&&Math.abs(w-W)>2) build(); } }).observe(plots);
+
+
+/* ===================== sensitivity ===================== */
+let sensOut=null, sensSpec=null; const sensOv={};
+const sensKeep={};   // which parameters were ticked, kept across refreshes
+const METRIC_LABEL={runoff_mm:['Basin runoff','mm'],peak_flow_mmh:['Peak outflow','mm/h'],sediment_kg:['Sediment leaving','kg']};
+const sg=v=>v==null||v===''?'–':String(+Number(v).toPrecision(4));
+async function postJSON(path,body){ const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}); return r.json(); }
+function sensMsg(html,cls){ $('sens_msg').innerHTML=html?`<div class="${cls||'note'}">${html}</div>`:''; }
+function valsText(vals){
+  const u=[...new Set(vals.filter(v=>v!=null))]; if(u.length===1) return sg(u[0]);
+  return vals.map((v,i)=>v==null?null:`P${i+1} ${sg(v)}`).filter(Boolean).join(' · ');
+}
+const num=v=>v===''||v==null?NaN:Number(v);
+function sensGuide(g){   // {uniform, lo, hi}: the guide range if every plane has the same one
+  const it=g.guide; if(!it.length||!it.every(Boolean)) return {uniform:false};
+  const same=it.every(x=>x.low===it[0].low&&x.high===it[0].high);
+  return same?{uniform:true,lo:it[0].low,hi:it[0].high}:{uniform:false};
+}
+function guideNote(g){
+  const items=g.guide.filter(Boolean); if(!items.length) return 'no guide range: enter a low and a high';
+  const src=[...new Set(items.map(x=>x.source))].join(', ');
+  if(sensGuide(g).uniform) return 'guide, '+src;
+  return 'guide ('+src+'): '+items.map(x=>`P${x.plane} ${sg(x.low)} to ${sg(x.high)}`).join(' · ')+'; leave blank to use these';
+}
+function baseText(g){ const u=[...new Set(g.base.map(v=>sg(v)))]; return u.length===1?u[0]:g.base.map((v,i)=>`P${i+1} ${sg(v)}`).join(' · '); }
+function checkBase(g,tr){   // flag a base value outside the range that will be used
+  const lo=num(tr.querySelector('[data-e="low"]').value), hi=num(tr.querySelector('[data-e="high"]').value);
+  const out=[]; g.base.forEach((v,i)=>{ let a,b;
+    if(!isNaN(lo)&&!isNaN(hi)){ a=Math.min(lo,hi); b=Math.max(lo,hi); } else if(g.guide[i]){ a=g.guide[i].low; b=g.guide[i].high; } else return;
+    const x=Number(v); if(x<a||x>b) out.push(`plane ${i+1}`); });
+  tr.querySelector('[data-flag]').innerHTML=out.length?`<span style="color:var(--c2)">base is outside this range on ${out.join(', ')}</span>`:'';
+}
+function renderSensPlan(plan){
+  $('sens_table').innerHTML='<thead><tr><th>Use</th><th>Parameter</th><th class="r">Low</th><th class="r">Base (form)</th><th class="r">High</th><th>Range from</th></tr></thead><tbody>'+
+   plan.map(g=>{ const ov=sensOv[g.key]||{}, on=sensKeep[g.key]!==undefined?sensKeep[g.key]:g.has_guide, gd=sensGuide(g);
+     const lo=ov.low??(gd.uniform?gd.lo:''), hi=ov.high??(gd.uniform?gd.hi:''), ph=g.has_guide&&!gd.uniform?'per plane':'';
+     return `<tr data-row="${g.key}"><td><input type="checkbox" data-sc="${g.key}" ${on?'checked':''} aria-label="Include ${g.label}"></td><td>${g.label}${g.unit?` <span class="hint">${g.unit}</span>`:''}</td>
+      <td class="r"><input type="number" step="any" data-so="${g.key}" data-e="low" value="${lo}" placeholder="${ph}" aria-label="${g.label} low"></td>
+      <td class="r"><b>${baseText(g)}</b></td>
+      <td class="r"><input type="number" step="any" data-so="${g.key}" data-e="high" value="${hi}" placeholder="${ph}" aria-label="${g.label} high"></td>
+      <td><span class="hint">${guideNote(g)}</span><br><span class="hint" data-flag></span></td></tr>`; }).join('')+'</tbody>';
+  const byKey=Object.fromEntries(plan.map(g=>[g.key,g]));
+  $('sens_table').querySelectorAll('[data-sc]').forEach(c=>c.addEventListener('change',()=>{ sensKeep[c.dataset.sc]=c.checked; sensCount(); }));
+  $('sens_table').querySelectorAll('[data-so]').forEach(i=>i.addEventListener('input',()=>{ (sensOv[i.dataset.so]=sensOv[i.dataset.so]||{})[i.dataset.e]=i.value; checkBase(byKey[i.dataset.so],i.closest('tr')); }));
+  $('sens_table').querySelectorAll('tr[data-row]').forEach(tr=>checkBase(byKey[tr.dataset.row],tr));
+  sensPlanData=plan; $('sens_plan').hidden=false; sensCount();
+}
+let sensPlanData=[];
+function sensCount(){ const n=$('sens_table').querySelectorAll('[data-sc]:checked').length; $('sens_count').textContent=n?`${n} parameter${n>1?'s':''}: about ${1+2*n} model runs`:'Tick at least one parameter'; }
+$('sens_setup').onclick=async()=>{
+  collect(); sensMsg(''); $('sens_status').textContent='Reading the ranges…';
+  try{ const out=await postJSON('/api/sensitivity/plan',{spec});
+    if(!out.ok){ showMessages(Object.assign({stage:'form'},out)); sensMsg('Fix the form first: '+esc((out.problems||[out.error]).map(nice).join('; ')),'err'); $('sens_status').textContent=''; return; }
+    renderSensPlan(out.plan); $('sens_status').textContent='Ranges follow the soil textures chosen above; set them up again if you change a texture.';
+  }catch(e){ sensMsg('Could not reach the service: '+esc(e.message),'err'); $('sens_status').textContent=''; }
+};
+$('sens_run').onclick=async()=>{
+  collect(); const keys=[...$('sens_table').querySelectorAll('[data-sc]:checked')].map(c=>c.dataset.sc);
+  const overrides={}; for(const k of keys){ const tr=$('sens_table').querySelector(`tr[data-row="${k}"]`), lo=tr.querySelector('[data-e="low"]').value, hi=tr.querySelector('[data-e="high"]').value;
+    if((lo===''&&hi!=='')||(lo!==''&&hi==='')){ sensMsg(`Enter both a low and a high for ${esc(k)}, or neither.`,'err'); return; }
+    if(lo===''&&hi==='') continue;
+    const g=sensPlanData.find(x=>x.key===k), gd=g?sensGuide(g):{};
+    if(gd.uniform&&Number(lo)===gd.lo&&Number(hi)===gd.hi) continue;    // still the guide's own range
+    overrides[k]={low:lo,high:hi}; }
+  if(!keys.length){ sensMsg('Tick at least one parameter.','err'); return; }
+  const btn=$('sens_run'); btn.disabled=true; sensMsg(''); $('sens_status').textContent='Running '+(1+2*keys.length)+' model runs…';
+  try{ const out=await postJSON('/api/sensitivity',{spec,params:keys,overrides});
+    if(!out.ok){ sensMsg(esc((out.problems||[out.error]).map(nice).join('; ')),'err'); $('sens_status').textContent=''; }
+    else{ sensOut=out; sensSpec=JSON.parse(JSON.stringify(spec)); $('sens_status').textContent=`Done: ${out.runs} runs in ${out.seconds} s`; showSens(); }
+  }catch(e){ sensMsg('Could not reach the service: '+esc(e.message),'err'); $('sens_status').textContent=''; }
+  btn.disabled=false;
+};
+$('sens_reset').onclick=()=>{
+  sensOut=null; sensSpec=null; for(const k in sensOv) delete sensOv[k]; for(const k in sensKeep) delete sensKeep[k];
+  $('sens_out').hidden=true; $('sens_chart').innerHTML=''; $('sens_results').innerHTML=''; sensMsg(''); $('sens_status').textContent='';
+  $('sens_setup').onclick();      // re-read the ranges from the form as it now stands
+};
+$('sens_metric').onchange=()=>{ if(sensOut) showSens(); };
+function changePct(m,base,k){ return m&&base[k]?(m[k]-base[k])/base[k]*100:null; }
+function showSens(){
+  const o=sensOut, k=$('sens_metric').value, b=o.base, [ml,mu]=METRIC_LABEL[k];
+  let notes=[]; (o.skipped||[]).forEach(s=>notes.push(`Not run: <b>${esc(s.label)}</b> (${esc(s.reason)})`));
+  o.rows.forEach(r=>['low','high'].forEach(c=>{ const x=r[c]; if(x.error) notes.push(`<b>${esc(r.label)}</b> ${c} run failed: ${esc(nice(x.error))}`); (x.notes||[]).forEach(n=>notes.push(`<b>${esc(r.label)}</b> ${c}: ${esc(n)}`)); }));
+  sensMsg(notes.length?'<ul style="margin:0;padding-left:20px">'+[...new Set(notes)].map(n=>`<li>${n}</li>`).join('')+'</ul>':'');
+  $('sens_base').innerHTML=`<b>Changes are measured from the base case</b>: the model run with the form's values as they stand, with no parameter varied. Base results: basin runoff ${fmt(b.runoff_mm,2)} mm · peak outflow ${fmt(b.peak_flow_mmh,1)} mm/h · sediment leaving ${fmt(b.sediment_kg,0)} kg. Peak outflow and sediment are for the outlet (plane ${o.outlet}); runoff is for the whole basin. Change = (result with the parameter at its low or high value − base) ÷ base.`;
+  const rows=o.rows.map(r=>({r,lo:changePct(r.low.metrics,b,k),hi:changePct(r.high.metrics,b,k)}));
+  rows.sort((x,y)=>Math.max(Math.abs(y.lo||0),Math.abs(y.hi||0))-Math.max(Math.abs(x.lo||0),Math.abs(x.hi||0)));
+  drawTornado(rows,ml);
+  $('sens_results').innerHTML='<thead><tr><th>Parameter</th><th>Low value</th><th>High value</th><th>'+ml+' at low ('+mu+')</th><th>'+ml+' at high ('+mu+')</th><th>Change at low</th><th>Change at high</th></tr></thead><tbody>'+rows.map(({r,lo,hi})=>{
+    const f=v=>v==null?'–':(v>0?'+':'')+fmt(v,1)+' %', a=x=>x.metrics?fmt(x.metrics[k],k==='sediment_kg'?0:2):'–';
+    return `<tr><td>${esc(r.label)}${r.unit?` <span class="hint">${esc(r.unit)}</span>`:''}</td><td>${valsText(r.low.values)}</td><td>${valsText(r.high.values)}</td><td>${a(r.low)}</td><td>${a(r.high)}</td><td>${f(lo)}</td><td>${f(hi)}</td></tr>`; }).join('')+`<tr><td><b>Base case</b></td><td colspan="2" class="hint" style="text-align:center">form values</td><td colspan="2">${fmt(b[k],k==='sediment_kg'?0:2)}</td><td colspan="2">0 %</td></tr></tbody>`;
+  $('sens_out').hidden=false;
+}
+function drawTornado(rows,ml){
+  const host=$('sens_chart'); if(!rows.length){ host.innerHTML='<p class="hint">No parameter had a range to run.</p>'; return; }
+  const Wd=Math.max(320,host.clientWidth||700), L=Math.min(190,Wd*0.38), R=54, rh=34, T=22, H=T+rows.length*rh+22;
+  const mx=niceMax(Math.max(1,...rows.flatMap(x=>[Math.abs(x.lo||0),Math.abs(x.hi||0)]))), iw=Wd-L-R;
+  const X=v=>L+iw/2+v/mx*iw/2;
+  let g=`<svg width="${Wd}" height="${H}" viewBox="0 0 ${Wd} ${H}" role="img" aria-label="Change in ${ml} for each parameter at its low and high value">`;
+  for(const t of [-mx,-mx/2,0,mx/2,mx]) g+=`<line x1="${X(t)}" x2="${X(t)}" y1="${T-6}" y2="${H-18}" stroke="${t===0?'var(--ink2)':'var(--grid)'}"/><text x="${X(t)}" y="${H-4}" text-anchor="middle">${t>0?'+':''}${tf(t)}%</text>`;
+  rows.forEach(({r,lo,hi},i)=>{ const y=T+i*rh;
+    g+=`<text x="${L-10}" y="${y+rh/2+1}" text-anchor="end" style="fill:var(--ink);font:12px var(--font)">${esc(r.label)}</text>`;
+    [[lo,'var(--c1)',y+5],[hi,'var(--c2)',y+rh/2+1]].forEach(([v,col,yy])=>{
+      if(v==null){ g+=`<text x="${X(0)+6}" y="${yy+10}">failed</text>`; return; }
+      const x0=X(0), x1=X(v); g+=`<rect x="${Math.min(x0,x1)}" y="${yy}" width="${Math.max(1,Math.abs(x1-x0))}" height="11" rx="2" fill="${col}"/>`+
+        `<text x="${v>=0?x1+5:x1-5}" y="${yy+10}" text-anchor="${v>=0?'start':'end'}">${v>0?'+':''}${fmt(v,1)}%</text>`; }); });
+  host.innerHTML=g+'</svg>';
+}
+$('sens_dl').onclick=()=>{ if(sensOut&&sensOut.csv){ const d=new Date(),p=n=>String(n).padStart(2,'0'); const t=(sensSpec.title||'run').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'run';
+  download(sensOut.csv,`eurosem_${t}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}_sensitivity.csv`); } };
+new ResizeObserver(()=>{ if(sensOut&&!$('sens_out').hidden){ const w=$('sens_chart').clientWidth; if(w&&Math.abs(w-(parseFloat($('sens_chart').firstChild?.getAttribute('width'))||0))>2) showSens(); } }).observe($('sens_chart'));
+
+/* public (hosted) copy: no sensitivity section */
+fetch('/api/config').then(r=>r.json()).then(c=>{ if(c&&c.public){ const s=document.querySelector('section[aria-label="Sensitivity"]'); if(s) s.remove(); } }).catch(()=>{});
+/* start with the example case */
+fetch('/api/guide').then(r=>r.json()).catch(()=>({textures:[]})).then(gd=>{
+  GUIDE.list=gd.textures||[]; GUIDE.by=Object.fromEntries(GUIDE.list.map(t=>[t.name,t])); for(const k of ['manning','dint','veg','pbase','root','tillage']) GUIDE[k]=gd[k]||[];
+  return fetch('/api/defaults'); }).then(r=>r.json()).then(load).catch(()=>{ $('messages').innerHTML='<div class="err">Could not load the example. Is the service running?</div>'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Render "Blueprint": New + > Blueprint, pick the repository.  Free plan, built from the Dockerfile.
+services:
+  - type: web
+    name: eurosem
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /healthz
+    envVars:
+      - key: EUROSEM_PUBLIC
+        value: "1"
