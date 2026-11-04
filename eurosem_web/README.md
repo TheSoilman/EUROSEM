@@ -1,8 +1,10 @@
 # EUROSEM planes: local web app
 
 Runs EUROSEM v3.2L from a browser form and shows the results as charts.
-Everything stays on this computer. Planes only (a cascade of up to 8),
+Run locally, everything stays on your computer (see "Public (hosted) copy" for the web version). Planes only (a cascade of up to 8),
 each with optional user-defined rills; channels and ponds are not in the form yet.
+
+**Disclaimer.** Results are model estimates and depend on the parameters entered. They are provided without warranty and should not be the sole basis for engineering, safety, regulatory or financial decisions. You are responsible for checking the inputs and for any use of the results.
 
 ## First time
 
@@ -37,6 +39,19 @@ to Reader view: click the page icon at the left of the address bar.
 4. **Download.** "Results (CSV, wide)" has comment rows at the top recording
    every setting used, then one row per time step. "Settings only" is the
    same record without results.
+
+## Saving and reloading settings
+
+"Save settings to a file" (next to Run model) downloads every setting on the page (event, rainfall
+table, all planes, and the guide choices such as soil texture) as a small `.json` file.
+"Load settings from a file" fills the whole form from such a file, so a run can be repeated or
+adjusted without retyping. This happens in the browser only: nothing is uploaded to the server or
+stored there, so it works the same on the hosted copy. A file is checked before it is used: it must
+be an EUROSEM settings file, every number must be a number, names must be ones the form knows,
+planes must link up, and missing fields come from the example case. If anything is wrong the form
+is left unchanged and the problems are listed. Unknown fields are ignored with a note. After loading,
+check the values and press Run model. The CSV downloads are for records and plotting and cannot be
+loaded back; use the settings file for that. Sensitivity ranges are not saved.
 
 ## Public (hosted) copy
 
@@ -150,6 +165,8 @@ early-event) may differ.
 
 ## Licence and credits
 
+Results are model estimates and depend on the parameters entered. They are provided without warranty and should not be the sole basis for engineering, safety, regulatory or financial decisions. You are responsible for checking the inputs and for any use of the results. (The same notice is at the top of the page. The GPL's own warranty disclaimer and limitation of liability are sections 15 and 16 of the licence.)
+
 The web interface, the Docker and hosting files, and the changes made to the model source for this
 version are released under the **GNU General Public License v3** (see the `LICENSE` file in the
 repository root; add it on GitHub with Add file > Create new file > `LICENSE` > Choose a license
@@ -161,10 +178,36 @@ Credits, to be kept with any copy:
 * EUROSEM: Morgan, R.P.C., Quinton, J.N., Smith, R.E., Govers, G., Poesen, J.W.A., Auerswald, K.,
   Chisci, G., Torri, D., Styczen, M.E., Folly, A.J.V. (1998). *The European soil erosion model
   (EUROSEM): documentation and user guide.* Silsoe College, Cranfield University.
+* Morgan, R.P.C., Quinton, J.N., Smith, R.E., Govers, G., Poesen, J.W.A., Auerswald, K., Chisci, G.,
+  Torri, D. and Styczen, M.E. (1998). The European Soil Erosion Model (EUROSEM): a dynamic approach for
+  predicting sediment transport from fields and small catchments. *Earth Surface Processes and
+  Landforms*, 23, 527-544. (The journal paper; used here for the equations and for checking the
+  guide and the source against each other.)
 * The model's overland-flow and infiltration framework derives from KINEROS (USDA Agricultural
   Research Service).
 * The guide tables built into the form (A3.1, A4.1, A4.2, A6.1, A7.1 to A7.3, A9.1 to A9.3) were
   transcribed from that user guide; misprints are flagged in the form.
+
+## Discrepancies between the guide, the paper and the source
+
+Found while building this version; each was checked against the Fortran source where it matters.
+"Guide" is the 1998 user guide, "paper" is Morgan et al. (1998) in Earth Surface Processes and Landforms.
+
+| Item | What the documents say | What the source does | Handling here |
+|---|---|---|---|
+| **Plant height units** | Guide Chapter 3, the worked example and Appendix 7 text: cm (`PLANTH`, 15.0 in the example file, echoed as 0.15 m). Guide Table A7.2: metres. Paper eq. 23: `PH` in metres. | Reads cm, divides by 100 (`emainl`, record 5), uses metres in `KINET`: `KE(LD) = 15.8 sqrt(PH) - 5.87`. Negative values are clamped to zero, which happens below about 14 cm. | Not a bug in the model; the documents mix the input unit (cm) with the internal unit (m). The form takes cm, the picker converts Table A7.2 (x 100), and a live note warns when a value of 2 or less (probably metres) is entered. |
+| **Canopy cover units** | Guide Chapter 3 and Appendix 7: "percentage cover", while the same Chapter 3 entry goes on to say proportion 0 to 1. Paper: a fraction. | Used as a fraction (`COVER * RAIN`, `COVER * DICMAX`); no division by 100. | Form takes a fraction (0 to 1). |
+| **Rill depth switch `RS`** | Guide example text describes it the opposite way round from Chapter 3. | `RS <= 0` on a plane with no upstream plane: depth scales with the square root of distance, so the entered depth is the bottom value. | Form follows the source and Chapter 3. |
+| **`SurfStor` in the .sta file** | Labelled "mm". | Prints metres (`0.001 exp(-6.66 + 0.27 RFR)`). | Parser and notes treat it as metres; the real-model RFR test checks it. |
+| **Table A4.1, silty clay loam THR** | Printed 0.380; neighbouring rows 0.015 to 0.11. | n/a | Kept as printed and flagged in the form. |
+| **Table A9.2, three rows** | Silty clay, silty clay loam and sandy clay loam: mean outside the low to high range. | n/a | Kept as printed; the form does not fill cohesion from them and says why. |
+| **Porosity, maximum and initial moisture** | Guide quotes porosity and moisture as % v/v. | Fractions. | Form takes fractions. |
+| **"Surface storage"** | Presented as storage. | `RECS`, the microrelief height that drives infiltration after rain stops. Depression storage comes from `RFR` instead. | Field relabelled "Microrelief height (RECS)"; RFR is exposed. |
+| **Erodibility sensitivity** | Guide Chapter 5 calls the model only moderately sensitive to erodibility. | In the reference case, erodibility 0 changed outlet sediment very little because flow detachment dominates; cohesion above a few kPa cut it sharply. | Recorded in the sensitivity notes; one storm and one soil only, so not a general conclusion. |
+| **`FMINEW(I)` in the channel branch; stale COMMON blocks in `Euroa.for`** | n/a | Probable bugs; they do not affect planes. | Not fixed; channels are not in the form. |
+| **Rill fill** | n/a | If deposition fills a rill the model stops ("excess rill fill") instead of continuing with a full rill. | The form explains the message in plain words. |
+
+Anything else you find, send it with the line of source or the page of the guide or paper and it goes in this table.
 
 ## What is where
 

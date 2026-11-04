@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>EUROSEM Planes</title>
+<title>EUROSEM v3.2L planes</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
 <style>
 /* Layout: one column. Event and rainfall, then plane cards, then Run; results appear below the form.
@@ -33,10 +33,12 @@
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 var(--font);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 64px}
 .wrap{max-width:1040px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
-h1{font-size:26px;line-height:1.2;margin:0;font-weight:600;letter-spacing:-.01em}
+h1{font-size:clamp(30px,5.5vw,46px);line-height:1.1;margin:0;font-weight:600;letter-spacing:-.02em}
 h2{font-size:13px;margin:0 0 12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink2)}
 .eyebrow{font:500 12px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--accent)}
 .sub{color:var(--ink2);margin:6px 0 0;max-width:68ch}
+.sub.lead{margin-top:12px;font-size:16px;line-height:1.55;max-width:72ch}.sub a{color:var(--accent)}
+.sub.disclaimer{margin-top:8px;font-size:14px;color:var(--muted)}
 .panel{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:16px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 16px;align-items:end}
 .f{display:flex;flex-direction:column;gap:3px;min-width:0}
@@ -121,9 +123,9 @@ table.sens td.r,table.sens th.r{text-align:right;font-family:var(--mono);white-s
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">EUROSEM 3.2L · planes</div>
-    <h1>Run an event</h1>
-    <p class="sub">Describe the rain and one or more planes in a cascade. The model runs on this computer and the results appear below.</p>
+    <h1>EUROSEM v3.2L &ndash; planes</h1>
+    <p class="sub lead">This web interface allows you to run EUROSEM v3.2L for cascades of planes, visualise the results, and save your input files and the output. Using the app means that you have agreed to the <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" rel="noopener">GNU General Public License (v3)</a> associated with EUROSEM v3.2L.</p>
+    <p class="sub lead disclaimer">Results are model estimates and depend on the parameters entered. They are provided without warranty and should not be the sole basis for engineering, safety, regulatory or financial decisions. You are responsible for checking the inputs and for any use of the results.</p>
   </header>
 
   <section aria-label="Event and rainfall">
@@ -163,6 +165,9 @@ table.sens td.r,table.sens th.r{text-align:right;font-family:var(--mono);white-s
     <div class="row">
       <button class="btn" type="button" id="run">Run model</button>
       <button class="ghost" type="button" id="reset">Reset to the example</button>
+      <button class="ghost" type="button" id="save_settings" title="Download every setting on this page as a small file, to load again later">Save settings to a file</button>
+      <button class="ghost" type="button" id="load_settings" title="Fill the whole form from a settings file saved earlier">Load settings from a file</button>
+      <input type="file" id="settings_file" accept=".json,application/json" hidden>
       <span class="hint" id="status" role="status"></span>
     </div>
     <div id="messages" style="display:flex;flex-direction:column;gap:10px;margin-top:12px"></div>
@@ -244,7 +249,7 @@ const HELP = {
  theta_max:['Maximum moisture content of the soil, as a fraction; it cannot exceed porosity. Choosing a texture fills the guide value.','guide Table 3.1, Appendix 4'],
  roc:['Fraction (0 to 1) of the soil occupied by rock fragments, which reduces the conductivity. Use 0 if the conductivity you entered was measured with the rock fragments in place.','guide Table 3.1, Appendix 5'],
  cover:['Proportion (0 to 1) of the ground obscured by vegetation seen from above. Include ground vegetation, mulch and litter as well as trees and bushes. (Table 3.1 says percentage; Appendix 7 and this form use a fraction.)','guide Appendix 7'],
- plant_height:['Height from which intercepted raindrops fall, in cm. Count ground vegetation, mulch and litter: it can be near zero under dense ground cover or litter, but is the canopy height over bare soil under trees. Table A7.2 gives heights in metres: multiply by 100.','guide Table 3.1, Appendix 7'],
+ plant_height:['Height from which intercepted raindrops fall, in cm. Count ground vegetation, mulch and litter: it can be near zero under dense ground cover or litter, but is the canopy height over bare soil under trees. Enter centimetres: the model reads cm and divides by 100 internally, and below 14 cm it sets leaf-drip energy to zero. Table A7.2 gives heights in metres: multiply by 100 (the picker does). Equation 23 in the 1998 paper is in metres because that is the model\'s internal unit.','guide Chapter 3 and Appendix 7 (cm), Table A7.2 (m); Morgan et al. 1998 eq. 23; model source'],
  interception:['Maximum interception storage of the plant cover, mm. Guide values for mature plants are in Table A7.1; use the picker below.','guide Appendix 7 (Table A7.1)'],
  plant_base:['Basal area of the vegetation as a fraction (0 to 1). Model outputs are highly sensitive to it because it reduces the conductivity. Set it to 0 if the conductivity was measured under the cover.','guide Appendix 7 (Table A7.3), Section 5.1.2'],
  plant_angle:['Average acute angle between the plant stems and the ground, in degrees. Guide values for mature plants are in Table A7.2. If there is no dominant angle, test the sensitivity.','guide Appendix 7 (Table A7.2)'],
@@ -311,7 +316,7 @@ function renderPlanes(){
       <div class="f" style="flex-direction:row;align-items:center;gap:8px"><label for="p${pi}_upstream">Receives runoff from</label>
       <select id="p${pi}_upstream" data-p="${pi}" data-k="upstream" style="width:auto"><option value="0">no other plane</option>${others.map(j=>`<option value="${j}">Plane ${j}</option>`).join('')}</select>
       ${spec.planes.length>1&&n===spec.planes.length?`<button class="ghost" type="button" data-remove="${pi}">Remove</button>`:''}</div></header>`+
-      PLANE_FIELDS.map(([g,fs])=>(g==='Soil water'?rillBlock(pi)+texBlock(pi):'')+`<div><p class="grp">${g}</p><div class="grid">${fs.map(f=>fieldHTML(pi,...f,g)).join('')}</div><p class="helpbox" data-hb="${g}" hidden></p>${pickHTML(pi,g)}${g==='Surface roughness'?'<p class="gh" data-gh="rfr"></p>':''}${g==='Soil water'?'<p class="gh" data-gh="soil"></p>':''}${g==='Erosion'?'<p class="gh" data-gh="ero"></p>':''}</div>`).join('')+
+      PLANE_FIELDS.map(([g,fs])=>(g==='Soil water'?rillBlock(pi)+texBlock(pi):'')+`<div><p class="grp">${g}</p><div class="grid">${fs.map(f=>fieldHTML(pi,...f,g)).join('')}</div><p class="helpbox" data-hb="${g}" hidden></p>${pickHTML(pi,g)}${g==='Surface roughness'?'<p class="gh" data-gh="rfr"></p>':''}${g==='Cover'?'<p class="gh" data-gh="cover"></p>':''}${g==='Soil water'?'<p class="gh" data-gh="soil"></p>':''}${g==='Erosion'?'<p class="gh" data-gh="ero"></p>':''}</div>`).join('')+
       `<details><summary>More settings</summary><div class="grid">${MORE_FIELDS.map(f=>fieldHTML(pi,...f,'More')).join('')}</div><p class="helpbox" data-hb="More" hidden></p></details>`;
     host.appendChild(el);
     el.querySelectorAll('[data-k]').forEach(inp=>{ inp.value=pl[inp.dataset.k]; inp.addEventListener('input',()=>{ pl[inp.dataset.k]=inp.type==='number'?inp.value:Number(inp.value); updateHints(el,pl); }); });
@@ -336,6 +341,12 @@ function rillBlock(pi){
   return `<div><p class="grp">Rills</p><div class="grid">${fieldHTML(pi,'rills','Rills','','Rills')}</div>
     <div data-rillbox hidden><div class="grid" style="margin-top:8px">${RILL_FIELDS.map(f=>fieldHTML(pi,...f,'Rills')).join('')}</div></div>
     <p class="helpbox" data-hb="Rills" hidden></p><p class="gh" data-gh="rill"></p></div>`;
+}
+function heightInfo(pl){
+  const h=Number(pl.plant_height); if(!(h>0)) return h===0?'<span class="why">Plant height 0: no leaf-drip energy (bare or fully covered by litter).</span>':'';
+  let t=h<14?`<span class="why">Plant height ${fmt(h,1)} cm is below 14 cm: the model sets leaf-drip energy to zero, so it has no effect on splash.</span>`:'';
+  if(h<=2) t+=` <span class="out">Plant height is entered in centimetres. If ${esc(pl.plant_height)} is in metres, enter ${fmt(h*100,0)} instead.</span>`;
+  return t;
 }
 function rfrInfo(pl){
   const r=Number(pl.rfr), n=Number(pl.manning);
@@ -381,6 +392,7 @@ function updateHints(el,pl){
   const ri=rillInfo(pl), rb=el.querySelector('[data-rillbox]'), rg=el.querySelector('[data-gh="rill"]');
   if(rb) rb.hidden=!ri.on; if(rg) rg.innerHTML=ri.html;
   const rf=el.querySelector('[data-gh="rfr"]'); if(rf) rf.innerHTML=rfrInfo(pl);
+  const cv=el.querySelector('[data-gh="cover"]'); if(cv) cv.innerHTML=heightInfo(pl);
   const he=el.querySelector('[data-gh="ero"]'), hs=el.querySelector('[data-gh="soil"]'), f=fbeta(pl.cohesion);
   if(he&&!isNaN(f)){ const t=f<0.001?f.toExponential(1):f.toFixed(f<0.01?4:3);
     he.insertAdjacentHTML('beforeend',`<br><b>Flow detachment factor at ${esc(pl.cohesion)} kPa: ${t}</b> <span class="why">(the model multiplies the flow-detachment rate by 0.79·exp(−0.85·cohesion), or 0.335 at or below 1 kPa)</span>`+(f<0.05?' <span class="out">Flow erosion is almost switched off at this cohesion; sediment will be set by cohesion, not by erodibility.</span>':'')); }
@@ -489,18 +501,82 @@ $('run').onclick=async()=>{
 };
 
 /* ===================== downloads ===================== */
-function fileStem(){
-  const t=(lastSpec.title||'run').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'run';
+function fileStem(sp){
+  sp=sp||lastSpec;
+  const t=(sp.title||'run').toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'').slice(0,40)||'run';
   const d=new Date(), p=n=>String(n).padStart(2,'0');
   return `eurosem_${t}_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}`;
 }
-function download(text,name){
-  const url=URL.createObjectURL(new Blob([text],{type:'text/csv;charset=utf-8'}));
+function download(text,name,mime){
+  const url=URL.createObjectURL(new Blob([text],{type:mime||'text/csv;charset=utf-8'}));
   const a=document.createElement('a'); a.href=url; a.download=name; document.body.appendChild(a); a.click(); a.remove();
   setTimeout(()=>URL.revokeObjectURL(url),2000);
 }
 $('dl_results').onclick=()=>{ if(csvs&&csvs.results) download(csvs.results,fileStem()+'_results.csv'); };
 $('dl_settings').onclick=()=>{ if(csvs&&csvs.settings) download(csvs.settings,fileStem()+'_settings.csv'); };
+
+/* ===================== save and load settings (in the browser only; nothing is sent to the server) ===================== */
+const SETTINGS_FORMAT='eurosem-web-settings';
+const TEXT_KEYS=['texture','condition','manning_ref','veg_ref','dint_ref','pbase_ref','till_ref','root_ref'];
+let DEFAULTS=null;
+$('save_settings').onclick=()=>{
+  collect();
+  const sp=JSON.parse(JSON.stringify(spec));
+  const file={format:SETTINGS_FORMAT,version:1,saved:new Date().toISOString(),note:'EUROSEM web interface settings. Load this file with "Load settings from a file".',spec:sp};
+  download(JSON.stringify(file,null,1)+'\n',fileStem(sp)+'_settings.json','application/json;charset=utf-8');
+  $('status').textContent='Settings saved to a file';
+};
+$('load_settings').onclick=()=>{ $('settings_file').value=''; $('settings_file').click(); };
+$('settings_file').addEventListener('change',()=>{
+  const f=$('settings_file').files[0]; if(!f) return;
+  const fail=list=>{ $('messages').innerHTML=`<div class="err">The settings file could not be used:<ul>${list.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>Nothing was changed.</div>`; $('status').textContent=''; };
+  if(f.size>200000) return fail(['the file is larger than a settings file should be (200 kB)']);
+  const rd=new FileReader();
+  rd.onerror=()=>fail(['the file could not be read']);
+  rd.onload=()=>{
+    let raw; try{ raw=JSON.parse(rd.result); }catch(e){ return fail(['it is not a valid settings file (the text is not readable as JSON)']); }
+    const res=cleanSettings(raw); if(res.errors.length) return fail(res.errors);
+    load(res.spec); $('messages').innerHTML=res.notes.length?`<div class="note">Settings loaded from ${esc(f.name)}.<ul>${res.notes.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>`:'';
+    $('status').textContent='Settings loaded; check them and press Run model';
+  };
+  rd.readAsText(f);
+});
+/* Turn the contents of a settings file into a form spec.  Only known fields are taken, numbers must be numbers, text fields must be
+   known guide names, and anything missing comes from the example case.  Returns {spec, errors, notes}. */
+function cleanSettings(raw){
+  const errors=[], notes=[];
+  const s=raw&&raw.format===SETTINGS_FORMAT?raw.spec:null;
+  if(!s||typeof s!=='object') return {errors:['it is not an EUROSEM settings file (saved with "Save settings to a file")']};
+  if(raw.version!==1) notes.push('the file has version '+String(raw.version).slice(0,10)+'; it was read as version 1');
+  const D=DEFAULTS, out={};
+  const num=(v,label)=>{ if(v===''||v===null) return ''; const n=typeof v==='number'?v:(typeof v==='string'&&v.trim()!==''?Number(v):NaN); if(!Number.isFinite(n)){ errors.push(label+' is not a number'); return ''; } return n; };
+  out.title=typeof s.title==='string'?s.title.slice(0,80):D.title;
+  for(const k of ['duration','timestep','temperature']) out[k]=s[k]===undefined?D[k]:num(s[k],'Event '+k);
+  if(!Array.isArray(s.rain)||s.rain.length<2||s.rain.length>99) errors.push('the rainfall table needs 2 to 99 rows');
+  else out.rain=s.rain.map((r,i)=>Array.isArray(r)&&r.length>=2?[num(r[0],'Rainfall row '+(i+1)+' time'),num(r[1],'Rainfall row '+(i+1)+' depth')]:(errors.push('rainfall row '+(i+1)+' needs a time and a depth'),[0,0]));
+  if(!Array.isArray(s.planes)||s.planes.length<1||s.planes.length>8) errors.push('the file needs 1 to 8 planes');
+  else {
+    const dflt=D.planes[0], unknown=new Set();
+    out.planes=s.planes.map((p,i)=>{
+      const q=Object.assign({},dflt);
+      if(!p||typeof p!=='object'){ errors.push('plane '+(i+1)+' is not readable'); return q; }
+      for(const k of Object.keys(p)){
+        if(k in dflt) q[k]=num(p[k],'Plane '+(i+1)+' '+k);
+        else if(TEXT_KEYS.includes(k)) q[k]=typeof p[k]==='string'?p[k].slice(0,80):'';
+        else unknown.add(k);
+      }
+      const t=q.texture; if(t&&!(GUIDE.by&&GUIDE.by[t])){ q.texture=''; notes.push('plane '+(i+1)+': soil texture "'+String(t).slice(0,40)+'" is not one the form knows, so it was cleared (the values were kept)'); }
+      if(q.condition&&!['loose_dry','compacted','loose_moist'].includes(q.condition)) q.condition='compacted';
+      for(const [k,key] of [['manning_ref','manning'],['veg_ref','veg'],['dint_ref','dint'],['pbase_ref','pbase'],['till_ref','tillage'],['root_ref','root']]){
+        const list=GUIDE[key]||[]; if(q[k]&&!list.some(o=>(o.label||o.name)===q[k])) q[k]='';
+      }
+      const u=Number(q.upstream); if(!Number.isInteger(u)||u<0||u>s.planes.length||u===i+1) errors.push('plane '+(i+1)+': "receives runoff from" must be 0 or another plane in the file');
+      return q;
+    });
+    if(unknown.size) notes.push('these fields in the file are not used by this version and were ignored: '+[...unknown].slice(0,8).map(x=>String(x).slice(0,30)).join(', '));
+  }
+  return {spec:out,errors,notes};
+}
 
 /* ===================== results ===================== */
 const ML=52, MR=12, MT=8, MB=20;
@@ -704,7 +780,7 @@ fetch('/api/config').then(r=>r.json()).then(c=>{ if(c&&c.public){ const s=docume
 /* start with the example case */
 fetch('/api/guide').then(r=>r.json()).catch(()=>({textures:[]})).then(gd=>{
   GUIDE.list=gd.textures||[]; GUIDE.by=Object.fromEntries(GUIDE.list.map(t=>[t.name,t])); for(const k of ['manning','dint','veg','pbase','root','tillage']) GUIDE[k]=gd[k]||[];
-  return fetch('/api/defaults'); }).then(r=>r.json()).then(load).catch(()=>{ $('messages').innerHTML='<div class="err">Could not load the example. Is the service running?</div>'; });
+  return fetch('/api/defaults'); }).then(r=>r.json()).then(d=>{ DEFAULTS=JSON.parse(JSON.stringify(d)); load(d); }).catch(()=>{ $('messages').innerHTML='<div class="err">Could not load the example. Is the service running?</div>'; });
 </script>
 </body>
 </html>
