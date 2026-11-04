@@ -3,5 +3,5 @@ The EUROSEM model was developed during the late 1980s and 1990s with funding fro
 
 Subsequently Lorenzo Borselli worked on a Pascal version of the model and currently an executable of this version is available from his personal website. 
 
-In 2026 John Quinton produced a web executable version of the model using the original fortran code compiled with fortran with a python code wrapper (coding help from Claude AI) which is archived here). Some bugs in the original code were discovered during this process and have been rectified. The web version is hosted on render.com and uses the code stored here.
+In 2026 John Quinton produced a web executable version of the model using the original fortran code compiled with gfortran with a python code wrapper (coding help from Claude AI) which is archived here. Some bugs in the original code were discovered during this process and have been rectified. The web version is hosted on render.com and uses the code stored here.
 If you requre any further information please contact John Quinton (j.Quinton@soilandwaterconsulting.co.uk)
